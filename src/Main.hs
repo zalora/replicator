@@ -32,7 +32,12 @@ import Text.Regex.Applicative ((<$>), (*>), (<*), (<*>), (=~),
                                 RE, string, anySym, psym, many, few, some)
 
 usage :: String
-usage = "Usage: repl [options] [channels]"
+usage = "Usage: repl [options] {command} [channel ...]\n\n" ++
+        "Commands:\n\n" ++
+        "  repl   - start replicating given channels\n" ++
+        "  dump   - only create dump for given channels\n" ++
+        "  list   - list all channels defined in config file\n\n" ++
+        "Options:"
 
 defineFlag "f:force" False "Force action, e. g. overwrite dumps"
 defineFlag "a:all" False "Act on all channels"
@@ -172,14 +177,18 @@ main :: IO()
 main = $initHFlags usage >> do
     conf <- fmap (forceEither . addChannelNames . forceEither) $
                 Cf.readfile Cf.emptyCP flags_config
-    let all_sections = Cf.sections conf
+    let (cmd:channels) = arguments
+        all_sections = Cf.sections conf
         all_channels = map (\s -> get conf s "channel") all_sections
-        channels = arguments
         sections = if flags_all then all_sections
                    else filter (\s -> get conf s "channel" `elem` channels)
                                all_sections
         missing = filter (`notElem` all_channels) channels
+    when (null arguments) $ error "No command specified"
     when (not $ null missing) $ error $ "No such channels: " ++ intercalate ", " missing
-    when (null sections) $ error "No channels to act on."
-    mapM_ (actionReplicate conf) sections
+    case cmd of
+        "repl" -> mapM_ (actionReplicate conf) sections
+        "dump" -> mapM_ (actionDump conf) sections
+        "list" -> putStrLn $ intercalate " " all_channels
+        _      -> error $ "Unknown command: " ++ cmd
     

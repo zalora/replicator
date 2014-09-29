@@ -26,12 +26,19 @@ Run
 ===
 `Replicator` is intended to run on a slave host:
 
-    repl [-c <config-file>] [options] { <channel> [, ...] | --all }
+    repl [options] {command} [channel ...]
+
+Commands:
+
+  * repl   - start replicating given channels
+  * dump   - only create dump for given channels
+  * list   - list all channels defined in config file
+
 
 This command will fetch an SQL dump for channel `foo` defined in
 `channels.ini`, import it, set up master options and start replication:
 
-    repl foo -f
+    repl repl foo -f
 
 Run `repl -h` for help.
 
