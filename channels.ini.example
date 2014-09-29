@@ -1,0 +1,85 @@
+[DEFAULT]
+repl-user = replicator
+repl-password =
+repl-ssl-ca = /run/keys/ca.crt
+repl-ssl-cert = /run/keys/foo.crt
+repl-ssl-key = /run/keys/foo.key
+
+dump-user = %(repl-user)s
+dump-password = %(repl-password)s
+dump-ssl-ca = %(repl-ssl-ca)s
+dump-ssl-cert = %(repl-ssl-cert)s
+dump-ssl-key = %(repl-ssl-key)s
+
+mysqldump-auth = -u %(dump-user)s %(dump-password)s --ssl-ca=%(dump-ssl-ca)s --ssl-cert=%(dump-ssl-cert)s --ssl-key=%(dump-ssl-key)s
+mysqldump-opt = --compress --skip-lock-tables --single-transaction --flush-logs --hex-blob --master-data=2
+mysqldump-databases = --all-databases
+mysqldump = mysqldump -h %(host)s %(mysqldump-opt)s %(mysqldump-auth)s %(mysqldump-databases)s
+
+dump-dir = /var/dumps
+dump = %(dump-dir)s/%(channel)s.mysql.gz
+compressor = pigz -c
+decompressor = gzip -d -c
+
+produce-dump-cmd = %(mysqldump)s | %(compressor)s
+read-dump-cmd = %(decompressor)s '%(dump)s'
+
+; For importing dumps:
+mysql-auth = -u root
+mysql-opt = --max-allowed-packet=64M
+mysql = mysql %(mysql-auth)s %(mysql-opt)s
+
+; SQL encasing dump:
+begin-import-sql = SET autocommit=0; SET unique_checks=0; SET foreign_key_checks=0;
+end-import-sql = COMMIT;
+
+; e. g. drop some tables:
+after-import-sql =
+
+; for MariaDB
+start-slave-sql = START SLAVE '%(channel)s';
+stop-slave-sql = STOP SLAVE '%(channel)s';
+
+; for MySQL >= 5.7
+;start-slave-sql = START SLAVE FOR CHANNEL='%(channel)s';
+;stop-slave-sql = STOP SLAVE FOR CHANNEL='%(channel)s';
+
+master-ssl-sql = MASTER_SSL=1, MASTER_SSL_CA='%(repl-ssl-ca)s', MASTER_SSL_CERT='%(repl-ssl-cert)s', MASTER_SSL_KEY='%(repl-ssl-key)s'
+master-log-sql = MASTER_LOG_FILE='%(log-file)s', MASTER_LOG_POS=%(log-pos)s
+master-auth-sql = MASTER_USER='%(repl-user)s', MASTER_PASSWORD='%(repl-password)s'
+master-host-sql = MASTER_HOST='%(host)s' 
+change-master-sql = CHANGE MASTER '%(channel)s' TO %(master-log-sql)s, %(master-auth-sql)s, %(master-ssl-sql)s, %(master-host-sql)s;
+
+; auto means section name
+channel = auto
+
+; auto means values from dumps
+log-file = auto
+log-pos = auto
+
+
+[example1]
+host = 192.168.1.2
+repl-ssl-ca = /run/keys/somewhere.crt
+repl-user = repl
+
+[example2]
+channel = foo
+host = 192.168.1.3
+repl-ssl-ca = /run/keys/somewhere.crt
+compressor = xz -c -3
+decompressor = xz -d -c
+
+[ssh-example]
+host = life
+channel = life
+dump-dir = /var/tmp
+mysqldump = mysqldump -u root --all-databases
+mysql = mysql -u root
+produce-dump-cmd = ssh %(host)s "%(mysqldump)s | %(compressor)s"
+
+[rds]
+host = you-know-where.example.com
+log-file = foo.0011
+log-pos = 123
+
