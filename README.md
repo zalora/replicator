@@ -1,7 +1,7 @@
 About
 =====
 This is a utility to automate DB replication for
-MySQL database family. It is primary aimed for multi-source
+MySQL database family. It is primarily aimed for multi-source
 replication (MariaDB >= 10.0.1 and MySQL >= 5.7),
 but can be used for a single-source replication.
 
