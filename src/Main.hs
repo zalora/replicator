@@ -7,7 +7,7 @@ module Main where
 import Data.Char (isDigit)
 import Data.Either.Utils (forceEither)
 import Data.IORef (newIORef, writeIORef, readIORef)
-import Data.List (intercalate)
+import Data.List (intercalate, sort)
 import qualified Data.ByteString.Char8 as BSC
 import qualified Data.ConfigFile as Cf
 
@@ -179,7 +179,7 @@ main = $initHFlags usage >> do
                 Cf.readfile Cf.emptyCP flags_config
     let (cmd:channels) = arguments
         all_sections = Cf.sections conf
-        all_channels = map (\s -> get conf s "channel") all_sections
+        all_channels = sort $ map (\s -> get conf s "channel") all_sections
         sections = if flags_all then all_sections
                    else filter (\s -> get conf s "channel" `elem` channels)
                                all_sections
