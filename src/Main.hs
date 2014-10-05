@@ -7,7 +7,7 @@ module Main where
 import Data.Char (isDigit)
 import Data.Either.Utils (forceEither)
 import Data.IORef (newIORef, writeIORef, readIORef)
-import Data.List (intercalate, sort)
+import Data.List (unwords, sort)
 import qualified Data.ByteString.Char8 as BSC
 import qualified Data.ConfigFile as Cf
 
@@ -190,10 +190,10 @@ main = $initHFlags usage >> do
                                all_sections
         missing = filter (`notElem` all_channels) channels
     when (null arguments) $ error "No command specified"
-    when (not $ null missing) $ error $ "No such channels: " ++ intercalate ", " missing
+    when (not $ null missing) $ error $ "No such channels: " ++ unwords missing
     case cmd of
         "repl" -> mapM_ (actionReplicate conf) sections
         "dump" -> mapM_ (actionDump conf) sections
-        "list" -> putStrLn $ intercalate " " all_channels
+        "list" -> putStrLn $ unwords all_channels
         _      -> error $ "Unknown command: " ++ cmd
     
