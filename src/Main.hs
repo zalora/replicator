@@ -31,6 +31,9 @@ import qualified Lens.Family as LF
 import Text.Regex.Applicative ((<$>), (*>), (<*), (<*>), (=~),
                                 RE, string, anySym, psym, many, few, some)
 
+import Replicator.CommandLine (makeCommandLine)
+import Replicator.Config (get)
+
 usage :: String
 usage = "Usage: repl [options] {command} [channel ...]\n\n" ++
         "Commands:\n\n" ++
@@ -61,17 +64,13 @@ masterLog = MasterLog <$> (many anySym *> string "MASTER_LOG_FILE='" *>
                       <*> (string "MASTER_LOG_POS=" *> masterLogPos <* many anySym)
 
 
-get :: Cf.ConfigParser -> Cf.SectionSpec -> Cf.OptionSpec -> String
-get conf sec opt =
-    forceEither $ Cf.interpolatingAccess 10 conf sec opt
-
 runSql :: Cf.ConfigParser -> Cf.SectionSpec -> String -> IO Cf.ConfigParser
 runSql conf sec cmd = if null sql then return conf else do
     putStrLn $ "echo " ++ show sql ++ " | " ++ mysql
     runShell $ yield (BSC.pack sql) >?> pipeCmd mysql >->
                 ignoreOut >-> PBS.toHandle stderr
     return conf
-    where mysql = get conf sec "mysql"
+    where mysql = makeCommandLine conf sec "mysql"
           sql = get conf sec cmd
 
 actionStopSlave :: Action
@@ -129,15 +128,15 @@ actionDump :: Action
 actionDump conf sec = do
     exists <- doesFileExist dump
     when (not exists || flags_force) $ do
-        putStrLn $ producer ++ " > " ++ show dump
+        putStrLn $ mysqldump ++ " > " ++ show dump
         withFile dump_tmp WriteMode ( \h -> runShell $
-            producerCmd producer >-> printError >-> PBS.toHandle h )
+            producerCmd mysqldump >-> printError >-> PBS.toHandle h )
         renameFile dump_tmp dump
     return conf
     where
         dump = get conf sec "dump"
         dump_tmp = dump ++ ".tmp"
-        producer = get conf sec "produce-dump-cmd"
+        mysqldump = makeCommandLine conf sec "mysqldump"
 
 actionImport :: Action
 actionImport conf sec = do
@@ -149,7 +148,7 @@ actionImport conf sec = do
     where
         begin = get conf sec "begin-import-sql"
         end = get conf sec "end-import-sql"
-        mysql = get conf sec "mysql"
+        mysql = makeCommandLine conf sec "mysql"
         reader = get conf sec "read-dump-cmd"
         sql = do
             yield (BSC.pack $ begin ++ "\n")
