@@ -47,7 +47,7 @@ defineFlag "a:all" False "Act on all channels"
 defineFlag "c:config" "channels.ini" "Path to configuration file"
 
 type Action = Cf.ConfigParser -> Cf.SectionSpec -> IO Cf.ConfigParser
-        
+
 type MasterLogFile = String
 type MasterLogPos = Int
 data MasterLog = MasterLog MasterLogFile MasterLogPos deriving Show
@@ -196,4 +196,4 @@ main = $initHFlags usage >> do
         "dump" -> mapM_ (actionDump conf) sections
         "list" -> putStrLn $ unwords all_channels
         _      -> error $ "Unknown command: " ++ cmd
-    
+
