@@ -14,4 +14,4 @@ makeCommandLine conf sec cmd = unwords $ cmd':args where
     opts = filter (isPrefixOf prefix) $ options conf sec
     prefix = cmd ++ "-"
     mkOption o = "--" ++ fromJust (stripPrefix prefix o) ++
-            "=" ++ get conf sec o
+            "=" ++ show (get conf sec o)
