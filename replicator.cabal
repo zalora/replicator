@@ -33,6 +33,7 @@ executable repl
                        pipes,
                        pipes-bytestring,
                        pipes-group >=1.0.1,
+                       pipes-safe,
                        pipes-shell,
                        regex-applicative,
                        transformers

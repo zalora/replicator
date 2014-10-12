@@ -21,8 +21,9 @@ import HFlags (defineFlag, initHFlags, arguments)
 import System.Directory (renameFile, doesFileExist)
 import System.IO (stderr, withFile, IOMode(WriteMode))
 
-import Pipes ((>->), await, yield, Pipe)
+import Pipes ((>->), await, yield, Pipe, Producer)
 import Pipes.Shell ((>?>), runShell, producerCmd, pipeCmd, ignoreOut)
+import Pipes.Safe (MonadSafe)
 import qualified Pipes.ByteString as PBS
 import qualified Pipes.Group as PG
 
@@ -88,11 +89,13 @@ actionChangeMaster conf sec = do
     runSql conf' sec "change-master-sql"
 
 
-printError :: (MonadIO m) => Pipe (Either BSC.ByteString BSC.ByteString) BSC.ByteString m ()
+printError :: MonadIO m => Pipe (Either BSC.ByteString BSC.ByteString) BSC.ByteString m ()
 printError = forever $ await >>= \case
     Left e  -> yield e >-> PBS.toHandle stderr
     Right o -> yield o
 
+producerCmd'' :: MonadSafe m => String -> Producer BSC.ByteString m ()
+producerCmd'' cmd = producerCmd cmd >-> printError
 
 -- TODO: get rid of IORef
 actionMasterLog :: Action
@@ -115,7 +118,7 @@ actionMasterLog conf sec = if log_file /= "auto" && log_pos /= "auto"
         log_file = get conf sec "log-file"
         log_pos = get conf sec "log-pos"
         reader = get conf sec "read-dump-cmd"
-        getMasterLog' out = runShell $ handful (producerCmd reader >-> printError) >?> grep
+        getMasterLog' out = runShell $ handful (producerCmd'' reader) >?> grep
             where
                 handful = LF.over PBS.lines (PG.takes nlines)
                 grep = await >>= \case
@@ -130,13 +133,14 @@ actionDump conf sec = do
     when (not exists || flags_force) $ do
         putStrLn $ mysqldump ++ " > " ++ show dump
         withFile dump_tmp WriteMode ( \h -> runShell $
-            producerCmd mysqldump >-> printError >-> PBS.toHandle h )
+            producerCmd'' mysqldump >-> PBS.toHandle h )
         renameFile dump_tmp dump
     return conf
     where
         dump = get conf sec "dump"
         dump_tmp = dump ++ ".tmp"
         mysqldump = makeCommandLine conf sec "mysqldump"
+
 
 actionImport :: Action
 actionImport conf sec = do
@@ -152,7 +156,7 @@ actionImport conf sec = do
         reader = get conf sec "read-dump-cmd"
         sql = do
             yield (BSC.pack $ begin ++ "\n")
-            producerCmd reader >-> printError
+            producerCmd'' reader
             yield (BSC.pack $ end ++ "\n")
 
 
