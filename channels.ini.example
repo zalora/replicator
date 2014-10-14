@@ -5,29 +5,26 @@ repl-ssl-ca = /run/keys/ca.crt
 repl-ssl-cert = /run/keys/foo.crt
 repl-ssl-key = /run/keys/foo.key
 
-dump-user = %(repl-user)s
-dump-password = %(repl-password)s
-dump-ssl-ca = %(repl-ssl-ca)s
-dump-ssl-cert = %(repl-ssl-cert)s
-dump-ssl-key = %(repl-ssl-key)s
-
-mysqldump-auth = -u %(dump-user)s %(dump-password)s --ssl-ca=%(dump-ssl-ca)s --ssl-cert=%(dump-ssl-cert)s --ssl-key=%(dump-ssl-key)s
-mysqldump-opt = --compress --skip-lock-tables --single-transaction --flush-logs --hex-blob --master-data=2
-mysqldump-databases = --all-databases
-mysqldump = mysqldump -h %(host)s %(mysqldump-opt)s %(mysqldump-auth)s %(mysqldump-databases)s
+; To create dumps:
+mysqldump = mysqldump
+mysqldump-all-databases = 1
+mysqldump-compress = 1
+mysqldump-host = %(host)s
+mysqldump-master-data=2
+mysqldump-password = %(repl-password)s
+mysqldump-ssl-ca = %(repl-ssl-ca)s
+mysqldump-ssl-cert = %(repl-ssl-cert)s
+mysqldump-ssl-key = %(repl-ssl-key)s
+mysqldump-user = %(repl-user)s
 
 dump-dir = /var/dumps
+; Compression is determined by extension, only gzip supported for a while:
 dump = %(dump-dir)s/%(channel)s.mysql.gz
-compressor = pigz -c
-decompressor = gzip -d -c
 
-produce-dump-cmd = %(mysqldump)s | %(compressor)s
-read-dump-cmd = %(decompressor)s '%(dump)s'
-
-; For importing dumps:
-mysql-auth = -u root
-mysql-opt = --max-allowed-packet=64M
-mysql = mysql %(mysql-auth)s %(mysql-opt)s
+; To import dumps:
+mysql = mysql
+mysql-max-allowed-packet=64M
+mysql-user = root
 
 ; SQL encasing dump:
 begin-import-sql = SET autocommit=0; SET unique_checks=0; SET foreign_key_checks=0;
@@ -67,19 +64,19 @@ repl-user = repl
 channel = foo
 host = 192.168.1.3
 repl-ssl-ca = /run/keys/somewhere.crt
-compressor = xz -c -3
-decompressor = xz -d -c
 
-[ssh-example]
+[example]
 host = life
 channel = life
 dump-dir = /var/tmp
-mysqldump = mysqldump -u root --all-databases
-mysql = mysql -u root
-produce-dump-cmd = ssh %(host)s "%(mysqldump)s | %(compressor)s"
+mysqldump-user = foo
+mysql-force = 1
 
 [rds]
 host = you-know-where.example.com
 log-file = foo.0011
 log-pos = 123
+
+[db02]
+dump = /var/tmp/db02.mysql.gz
 
