@@ -19,9 +19,9 @@ import Control.Monad.IO.Class (liftIO, MonadIO)
 import HFlags (defineFlag, initHFlags, arguments)
 
 import System.Directory (renameFile, doesFileExist)
-import System.IO (stderr, withFile, IOMode(WriteMode))
+import System.IO (stderr, withFile, IOMode(WriteMode, ReadMode))
 
-import Pipes ((>->), await, yield, Pipe, Producer)
+import Pipes ((>->), await, yield, Pipe, Producer, for)
 import Pipes.Shell ((>?>), runShell, producerCmd, pipeCmd, ignoreOut)
 import Pipes.Safe (MonadSafe)
 import qualified Pipes.ByteString as PBS
@@ -34,6 +34,7 @@ import Text.Regex.Applicative ((<$>), (*>), (<*), (<*>), (=~),
 
 import Replicator.CommandLine (makeCommandLine)
 import Replicator.Config (get)
+import Replicator.Compress (compress, decompress)
 
 usage :: String
 usage = "Usage: repl [options] {command} [channel ...]\n\n" ++
@@ -67,7 +68,6 @@ masterLog = MasterLog <$> (many anySym *> string "MASTER_LOG_FILE='" *>
 
 runSql :: Cf.ConfigParser -> Cf.SectionSpec -> String -> IO Cf.ConfigParser
 runSql conf sec cmd = if null sql then return conf else do
-    putStrLn $ "echo " ++ show sql ++ " | " ++ mysql
     runShell $ yield (BSC.pack sql) >?> pipeCmd mysql >->
                 ignoreOut >-> PBS.toHandle stderr
     return conf
@@ -101,7 +101,6 @@ producerCmd'' cmd = producerCmd cmd >-> printError
 actionMasterLog :: Action
 actionMasterLog conf sec = if log_file /= "auto" && log_pos /= "auto"
     then return conf else do
-    putStrLn $ reader ++ " | head -n " ++ show nlines ++ " | grep -F 'CHANGE MASTER TO'"
     master_log <- newIORef Nothing
     getMasterLog' master_log
     readIORef master_log >>= \case
@@ -117,13 +116,14 @@ actionMasterLog conf sec = if log_file /= "auto" && log_pos /= "auto"
         nlines = 60
         log_file = get conf sec "log-file"
         log_pos = get conf sec "log-pos"
-        reader = get conf sec "read-dump-cmd"
-        getMasterLog' out = runShell $ handful (producerCmd'' reader) >?> grep
-            where
-                handful = LF.over PBS.lines (PG.takes nlines)
-                grep = await >>= \case
-                    Nothing -> liftIO $ writeIORef out Nothing
-                    Just bs -> case BSC.unpack bs =~ masterLog of
+        dump = get conf sec "dump"
+        getMasterLog' out = withFile dump ReadMode ( \h -> runShell $
+            handful (decompress dump $ PBS.fromHandle h) >?> grep )
+                where
+                    handful = LF.over PBS.lines (PG.takes nlines)
+                    grep = await >>= \case
+                        Nothing -> liftIO $ writeIORef out Nothing
+                        Just bs -> case BSC.unpack bs =~ masterLog of
                             Nothing -> grep
                             Just r -> liftIO $ writeIORef out (Just r)
 
@@ -131,9 +131,9 @@ actionDump :: Action
 actionDump conf sec = do
     exists <- doesFileExist dump
     when (not exists || flags_force) $ do
-        putStrLn $ mysqldump ++ " > " ++ show dump
         withFile dump_tmp WriteMode ( \h -> runShell $
-            producerCmd'' mysqldump >-> PBS.toHandle h )
+            for (compress dump $ producerCmd'' mysqldump)
+                (liftIO . BSC.hPutStr h) )
         renameFile dump_tmp dump
     return conf
     where
@@ -141,22 +141,19 @@ actionDump conf sec = do
         dump_tmp = dump ++ ".tmp"
         mysqldump = makeCommandLine conf sec "mysqldump"
 
-
 actionImport :: Action
 actionImport conf sec = do
-    putStrLn $ "(echo " ++ show begin ++ "; \\\n" ++
-                reader ++ "; \\\necho " ++ show end ++
-                ") | " ++ mysql
-    runShell $ sql >?> pipeCmd mysql >-> ignoreOut >-> PBS.toHandle stderr
+    withFile dump ReadMode ( \h -> runShell $
+        sql h >?> pipeCmd mysql >-> ignoreOut >-> PBS.toHandle stderr )
     return conf
     where
         begin = get conf sec "begin-import-sql"
         end = get conf sec "end-import-sql"
+        dump = get conf sec "dump"
         mysql = makeCommandLine conf sec "mysql"
-        reader = get conf sec "read-dump-cmd"
-        sql = do
+        sql h = do
             yield (BSC.pack $ begin ++ "\n")
-            producerCmd'' reader
+            decompress dump $ PBS.fromHandle h
             yield (BSC.pack $ end ++ "\n")
 
 

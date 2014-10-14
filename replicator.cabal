@@ -27,6 +27,7 @@ executable repl
                        bytestring,
                        containers,
                        directory,
+                       filepath,
                        hflags,
                        lens-family-core >=1.1.0,
                        mtl,
@@ -35,6 +36,7 @@ executable repl
                        pipes-group >=1.0.1,
                        pipes-safe,
                        pipes-shell,
+                       pipes-zlib >=0.4.3,
                        regex-applicative,
                        transformers
 
