@@ -1,8 +1,7 @@
 module Replicator.CommandLine where
 
 import qualified Data.ConfigFile as Cf
-import Data.Either.Utils (forceEither)
-import Data.List (isPrefixOf, stripPrefix, unwords)
+import Data.List (isPrefixOf, stripPrefix)
 import Data.Maybe (fromJust)
 
 import Replicator.Config (get, options)

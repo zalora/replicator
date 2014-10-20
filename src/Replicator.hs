@@ -7,13 +7,12 @@ module Main where
 import Data.Char (isDigit)
 import Data.Either.Utils (forceEither)
 import Data.IORef (newIORef, writeIORef, readIORef)
-import Data.List (unwords, sort)
+import Data.List (sort)
 import qualified Data.ByteString.Char8 as BSC
 import qualified Data.ConfigFile as Cf
 
 import Control.Monad (when, forever)
 import Control.Monad.Error (runErrorT)
-import Control.Monad.Error.Class (MonadError)
 import Control.Monad.IO.Class (liftIO, MonadIO)
 
 import HFlags (defineFlag, initHFlags, arguments)
