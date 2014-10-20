@@ -33,7 +33,7 @@ import Text.Regex.Applicative ((<$>), (*>), (<*), (<*>), (=~),
                                 RE, string, anySym, psym, many, few, some)
 
 import Replicator.CommandLine (makeCommandLine)
-import Replicator.Config (get)
+import Replicator.Config (get, addChannelNames, addDefaults)
 import Replicator.Compress (compress, decompress)
 
 usage :: String
@@ -170,18 +170,9 @@ actionReplicate = run [ actionDump
                       , actionStartSlave
                       ]
 
-
-addChannelNames :: MonadError Cf.CPError m => Cf.ConfigParser -> m Cf.ConfigParser
-addChannelNames conf = go conf $ Cf.sections conf
-    where go cf [] = return cf
-          go cf (x:xs) = if ch /= "auto" then go cf xs else do
-            cf' <- Cf.set cf x "channel" x
-            go cf' xs
-            where ch = get cf x "channel"
-
 main :: IO()
 main = $initHFlags usage >> do
-    conf <- fmap (forceEither . addChannelNames . forceEither) $
+    conf <- fmap (addDefaults ["mysql", "mysqldump"] . addChannelNames . forceEither) $
                 Cf.readfile Cf.emptyCP flags_config
     let (cmd:channels) = arguments
         all_sections = Cf.sections conf
