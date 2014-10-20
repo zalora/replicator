@@ -13,5 +13,8 @@ makeCommandLine conf sec cmd = unwords $ cmd':args where
     args = map mkOption opts
     opts = filter (isPrefixOf prefix) $ options conf sec
     prefix = cmd ++ "-"
-    mkOption o = "--" ++ fromJust (stripPrefix prefix o) ++
-            "=" ++ show (get conf sec o)
+    mkOption o = case name of
+        "databases" -> "--" ++ name ++ " " ++ value
+        _ -> "--" ++ name ++ "=" ++ show value
+        where name = fromJust (stripPrefix prefix o)
+              value = get conf sec o
