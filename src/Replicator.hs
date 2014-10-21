@@ -67,6 +67,7 @@ masterLog = MasterLog <$> (many anySym *> string "MASTER_LOG_FILE='" *>
 
 runSql :: Cf.ConfigParser -> Cf.SectionSpec -> String -> IO Cf.ConfigParser
 runSql conf sec cmd = if null sql then return conf else do
+    putStrLn $ "Executing " ++ show sql
     runShell $ yield (BSC.pack sql) >?> pipeCmd mysql >->
                 ignoreOut >-> PBS.toHandle stderr
     return conf
@@ -130,6 +131,7 @@ actionDump :: Action
 actionDump conf sec = do
     exists <- doesFileExist dump
     when (not exists || flags_force) $ do
+        putStrLn $ "Creating " ++ show dump
         withFile dump_tmp WriteMode ( \h -> runShell $
             for (compress dump $ producerCmd'' mysqldump)
                 (liftIO . BSC.hPutStr h) )
@@ -142,6 +144,7 @@ actionDump conf sec = do
 
 actionImport :: Action
 actionImport conf sec = do
+    putStrLn $ "Importing " ++ show dump
     withFile dump ReadMode ( \h -> runShell $
         sql h >?> pipeCmd mysql >-> ignoreOut >-> PBS.toHandle stderr )
     return conf
