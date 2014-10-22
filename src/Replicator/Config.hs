@@ -8,7 +8,7 @@ get :: Cf.ConfigParser -> Cf.SectionSpec -> Cf.OptionSpec -> String
 get conf sec opt =
     forceEither $ Cf.interpolatingAccess 10 conf sec opt
 
-options :: Cf.ConfigParser -> Cf.SectionSpec -> [String]
+options :: Cf.ConfigParser -> Cf.SectionSpec -> [Cf.OptionSpec]
 options conf sec = (toList . fromList) $
     forceEither (Cf.options conf sec) ++
     forceEither (Cf.options conf "DEFAULT")
