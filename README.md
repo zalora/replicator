@@ -20,11 +20,10 @@ Installation
 
 Configuration
 =============
-See `channels.ini.example`.
+See samples under the [examples](examples) directory.
 
 Run
 ===
-`Replicator` is intended to run on a slave host:
 
     repl [options] {command} [channel ...]
 
@@ -35,7 +34,7 @@ Commands:
   * list   - list all channels defined in config file
 
 
-This command will fetch an SQL dump for channel `foo` defined in
+This command will create an SQL dump for channel `foo` defined in
 `channels.ini`, import it, set up master options and start replication:
 
     repl repl foo -f
