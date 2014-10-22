@@ -80,9 +80,6 @@ actionStopSlave conf sec = runSql conf sec "stop-slave-sql"
 actionStartSlave :: Action
 actionStartSlave conf sec = runSql conf sec "start-slave-sql"
 
-actionAfterImportSql :: Action
-actionAfterImportSql conf sec = runSql conf sec "after-import-sql"
-
 actionChangeMaster :: Action
 actionChangeMaster conf sec = do
     conf' <- actionMasterLog conf sec
@@ -167,7 +164,6 @@ actionReplicate :: Action
 actionReplicate = run [ actionDump
                       , actionStopSlave
                       , actionImport
-                      , actionAfterImportSql
                       , actionChangeMaster
                       , actionStartSlave
                       ]
