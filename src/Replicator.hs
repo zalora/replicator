@@ -175,7 +175,7 @@ main = $initHFlags usage >> do
     let (cmd:channels) = arguments
         all_sections = Cf.sections conf
         all_channels = sort $ map (\s -> get conf s "channel") all_sections
-        sections = if flags_all then all_sections
+        sections = if flags_all || length all_sections == 1 then all_sections
                    else filter (\s -> get conf s "channel" `elem` channels)
                                all_sections
         missing = filter (`notElem` all_channels) channels
