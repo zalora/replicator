@@ -2,16 +2,15 @@ module Replicator.Config where
 
 import qualified Data.ConfigFile as Cf
 import Data.Either.Utils (forceEither)
-import Data.Set (fromList, toList)
+import Data.List (union)
 
 get :: Cf.ConfigParser -> Cf.SectionSpec -> Cf.OptionSpec -> String
 get conf sec opt =
     forceEither $ Cf.interpolatingAccess 10 conf sec opt
 
 options :: Cf.ConfigParser -> Cf.SectionSpec -> [Cf.OptionSpec]
-options conf sec = (toList . fromList) $
-    forceEither (Cf.options conf sec) ++
-    forceEither (Cf.options conf "DEFAULT")
+options conf sec = forceEither (Cf.options conf sec)
+                    `union` forceEither (Cf.options conf "DEFAULT")
 
 addChannelNames :: Cf.ConfigParser -> Cf.ConfigParser
 addChannelNames conf = go conf $ Cf.sections conf
