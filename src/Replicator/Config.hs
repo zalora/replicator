@@ -17,7 +17,8 @@ addChannelNames :: Cf.ConfigParser -> Cf.ConfigParser
 addChannelNames conf = go conf $ Cf.sections conf
     where go cf [] = cf
           go cf (x:xs) = if ch /= "auto" then go cf xs else go cf' xs
-            where ch = get cf x "channel"
+            where ch = if Cf.has_option cf x "channel"
+                        then get cf x "channel" else "auto"
                   cf' = forceEither $ Cf.set cf x "channel" x
 
 addDefaults :: [Cf.OptionSpec] -> Cf.ConfigParser -> Cf.ConfigParser
