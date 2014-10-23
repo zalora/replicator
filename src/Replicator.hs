@@ -4,7 +4,6 @@
 
 module Main where
 
-import Data.Char (isDigit)
 import Data.Either.Utils (forceEither)
 import Data.IORef (newIORef, writeIORef, readIORef)
 import Data.List (sort)
@@ -28,12 +27,10 @@ import qualified Pipes.Group as PG
 
 import qualified Lens.Family as LF
 
-import Text.Regex.Applicative ((<$>), (*>), (<*), (<*>), (=~),
-                                RE, string, anySym, psym, many, few, some)
-
 import Replicator.CommandLine (makeCommandLine)
 import Replicator.Config (get, addChannelNames, addDefaults)
 import Replicator.Compress (compress, decompress)
+import Replicator.Regex (masterLog, MasterLog(..), (=~))
 
 usage :: String
 usage = "Usage: repl [options] {command} [channel ...]\n\n" ++
@@ -48,22 +45,6 @@ defineFlag "a:all" False "Act on all channels"
 defineFlag "c:config" "channels.ini" "Path to configuration file"
 
 type Action = Cf.ConfigParser -> Cf.SectionSpec -> IO Cf.ConfigParser
-
-type MasterLogFile = String
-type MasterLogPos = Int
-data MasterLog = MasterLog MasterLogFile MasterLogPos deriving Show
-
-masterLogFile :: RE Char MasterLogFile
-masterLogFile = some $ psym (/= '\'')
-
-masterLogPos :: RE Char MasterLogPos
-masterLogPos = read <$> some (psym isDigit)
-
-masterLog :: RE Char MasterLog
-masterLog = MasterLog <$> (many anySym *> string "MASTER_LOG_FILE='" *>
-                            masterLogFile <* string "'" <* few anySym)
-                      <*> (string "MASTER_LOG_POS=" *> masterLogPos <* many anySym)
-
 
 runSql :: Cf.ConfigParser -> Cf.SectionSpec -> String -> IO Cf.ConfigParser
 runSql conf sec cmd = if null sql then return conf else do
