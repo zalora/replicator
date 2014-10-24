@@ -31,12 +31,17 @@ import Replicator.Config (get, addChannelNames, addDefaults)
 import Replicator.Compress (compress, decompress)
 import Replicator.Regex (masterLog, MasterLog(..), (=~))
 
+import Paths_replicator (version) -- from cabal
+import Data.Version (showVersion)
+
 usage :: String
-usage = "Usage: repl [options] {command} [channel ...]\n\n" ++
+usage = "replicator " ++ showVersion version ++ ". " ++
+        "Automate creating MySQL multi-source slaves\n" ++
+        "Usage: repl [options] {command} [channel ...]\n\n" ++
         "Commands:\n\n" ++
-        "  repl   - start replicating given channels\n" ++
-        "  dump   - only create dump for given channels\n" ++
-        "  list   - list all channels defined in config file\n\n" ++
+        "  repl   - replicate the given channels from scratch\n" ++
+        "  dump   - only create dump for the given channels\n" ++
+        "  list   - list all channels defined in the config file\n\n" ++
         "Options:"
 
 defineFlag "f:force" False "Force action, e. g. overwrite dumps"
