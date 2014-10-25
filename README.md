@@ -29,12 +29,12 @@ Run
 
 Commands:
 
-  * repl   - start replicating given channels
-  * dump   - only create dump for given channels
-  * list   - list all channels defined in config file
+  * `list`   - list all channels defined in the config file
+  * `info`   - show essential options for the give channels
+  * `dump`   - only create dump for the given channels
+  * `repl`   - replicate the given channels from scratch
 
-
-This command will create an SQL dump for channel `foo` defined in
+The following command will create an SQL dump for channel `foo` defined in
 `channels.ini`, import it, set up master options and start replication:
 
     repl repl foo -f
