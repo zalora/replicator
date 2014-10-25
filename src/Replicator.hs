@@ -3,7 +3,6 @@
 
 module Main where
 
-import Data.Either.Utils (forceEither)
 import Data.IORef (newIORef, writeIORef, readIORef)
 import Data.List (sort)
 import qualified Data.ByteString.Char8 as BSC
@@ -27,7 +26,7 @@ import qualified Pipes.Group as PG
 import qualified Lens.Family as LF
 
 import Replicator.CommandLine (makeCommandLine)
-import Replicator.Config (get, addChannelNames, addDefaults)
+import Replicator.Config (get, openConfig)
 import Replicator.Compress (compress, decompress)
 import Replicator.Regex (masterLog, MasterLog(..), (=~))
 
@@ -155,8 +154,7 @@ actionReplicate = run [ actionDump
 
 main :: IO()
 main = $initHFlags usage >> do
-    conf <- fmap (addDefaults ["mysql", "mysqldump"] . addChannelNames . forceEither) $
-                Cf.readfile Cf.emptyCP flags_config
+    conf <- openConfig flags_config
     let (cmd:channels) = arguments
         all_sections = Cf.sections conf
         all_channels = sort $ map (\s -> get conf s "channel") all_sections

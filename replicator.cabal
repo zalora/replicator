@@ -46,6 +46,7 @@ executable repl
         pipes-safe,
         pipes-shell,
         pipes-zlib >=0.4.3,
+        raw-strings-qq,
         regex-applicative,
         transformers
     hs-source-dirs: src
