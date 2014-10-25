@@ -41,6 +41,8 @@ usage = "replicator " ++ showVersion version ++ ". " ++
         "  list   - list all channels defined in the config file\n" ++
         "  info   - show essential options for the give channels\n" ++
         "  dump   - only create dump for the given channels\n" ++
+        "  stop   - stop replication for the given channels\n" ++
+        "  start  - start replication for the given channels\n" ++
         "  repl   - replicate the given channels from scratch\n\n" ++
         "Options:"
 
@@ -182,6 +184,8 @@ main = $initHFlags usage >> do
         "list" -> putStrLn $ unwords all_channels
         "info" -> mapM_ (actionInfo conf) sections
         "dump" -> mapM_ (actionDump conf) sections
+        "stop" -> mapM_ (actionStopSlave conf) sections
+        "start" -> mapM_ (actionStartSlave conf) sections
         "repl" -> mapM_ (actionReplicate conf) sections
         _      -> error $ "Unknown command: " ++ cmd
 
