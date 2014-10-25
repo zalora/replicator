@@ -38,9 +38,10 @@ usage = "replicator " ++ showVersion version ++ ". " ++
         "Automate creating MySQL multi-source slaves\n" ++
         "Usage: repl [options] {command} [channel ...]\n\n" ++
         "Commands:\n\n" ++
-        "  repl   - replicate the given channels from scratch\n" ++
+        "  list   - list all channels defined in the config file\n" ++
+        "  info   - show essential options for the give channels\n" ++
         "  dump   - only create dump for the given channels\n" ++
-        "  list   - list all channels defined in the config file\n\n" ++
+        "  repl   - replicate the given channels from scratch\n\n" ++
         "Options:"
 
 defineFlag "f:force" False "Force action, e. g. overwrite dumps"
@@ -68,6 +69,19 @@ actionChangeMaster :: Action
 actionChangeMaster conf sec = do
     conf' <- actionMasterLog conf sec
     runSql conf' sec "change-master-sql"
+
+actionInfo :: Action
+actionInfo conf sec = do
+    putStrLn $ "[" ++ channel ++ "]"
+    mapM_ putStrLn (options ++ commands)
+    putStrLn ""
+    return conf
+    where channel = get conf sec "channel"
+          options = map (\k -> k ++ " = " ++ get conf sec k)
+                    [ "dump", "change-master-sql", "stop-slave-sql"
+                    , "start-slave-sql", "begin-import-sql", "end-import-sql" ]
+          commands = map (\c -> c ++ " = " ++ makeCommandLine conf sec c)
+                        [ "mysqldump", "mysql" ]
 
 
 printError :: MonadIO m => Pipe (Either BSC.ByteString BSC.ByteString) BSC.ByteString m ()
@@ -165,8 +179,9 @@ main = $initHFlags usage >> do
     when (null arguments) $ error "No command specified"
     when (not $ null missing) $ error $ "No such channels: " ++ unwords missing
     case cmd of
-        "repl" -> mapM_ (actionReplicate conf) sections
-        "dump" -> mapM_ (actionDump conf) sections
         "list" -> putStrLn $ unwords all_channels
+        "info" -> mapM_ (actionInfo conf) sections
+        "dump" -> mapM_ (actionDump conf) sections
+        "repl" -> mapM_ (actionReplicate conf) sections
         _      -> error $ "Unknown command: " ++ cmd
 
