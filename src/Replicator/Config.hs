@@ -35,6 +35,7 @@ log-file  = auto
 log-pos   = auto
 mysql     = mysql
 mysqldump = mysqldump
+mysqldump-master-data = 2
 |]
 
 defaultCP = forceEither $ Cf.readstring
