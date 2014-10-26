@@ -44,6 +44,7 @@ begin-import-sql = SET autocommit = 0; SET unique_checks = 0; SET foreign_key_ch
 end-import-sql   = COMMIT;
 |]
 
+defaultCP :: Cf.ConfigParser
 defaultCP = forceEither $ Cf.readstring
             Cf.emptyCP {Cf.accessfunc = Cf.interpolatingAccess 10}
             defaults
@@ -65,9 +66,9 @@ makeCommandLine conf sec cmd = unwords $ cmd':args where
 -- must go first, see http://bugs.mysql.com/bug.php?id=31312
 -- databases and all-databases at the end is just a matter of taste
 reorderMySQLOptions :: [String] -> [String]
-reorderMySQLOptions a = fst ++ other ++ lst
-    where (fst, a') = partition (`elem` first) a
-          (lst, other) = partition (`elem` last) a'
-          first = ["defaults-file", "defaults-extra-file"]
-          last = ["databases", "all-databases"]
+reorderMySQLOptions a = b ++ m ++ e
+    where (b, a') = partition (`elem` begin) a
+          (e, m) = partition (`elem` end) a'
+          begin = ["defaults-file", "defaults-extra-file"]
+          end = ["databases", "all-databases"]
 
