@@ -25,8 +25,7 @@ import qualified Pipes.Group as PG
 
 import qualified Lens.Family as LF
 
-import Replicator.CommandLine (makeCommandLine)
-import Replicator.Config (get, openConfig)
+import Replicator.Config (get, openConfig, makeCommandLine)
 import Replicator.Compress (compress, decompress)
 import Replicator.Regex (masterLog, MasterLog(..), (=~))
 

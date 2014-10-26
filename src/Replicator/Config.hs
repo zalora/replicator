@@ -1,6 +1,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 module Replicator.Config (
     get,
+    makeCommandLine,
     options,
     openConfig
 ) where
@@ -8,7 +9,8 @@ module Replicator.Config (
 import qualified Data.ConfigFile as Cf
 import Control.Applicative ((<$>))
 import Data.Either.Utils (forceEither)
-import Data.List (union)
+import Data.List (union, isPrefixOf, stripPrefix, partition)
+import Data.Maybe (fromJust)
 import Text.RawString.QQ (r)
 
 get :: Cf.ConfigParser -> Cf.SectionSpec -> Cf.OptionSpec -> String
@@ -45,4 +47,27 @@ end-import-sql   = COMMIT;
 defaultCP = forceEither $ Cf.readstring
             Cf.emptyCP {Cf.accessfunc = Cf.interpolatingAccess 10}
             defaults
+
+makeCommandLine :: Cf.ConfigParser -> Cf.SectionSpec -> String -> String
+makeCommandLine conf sec cmd = unwords $ cmd':args where
+    cmd' = get conf sec cmd
+    args = map mkArgument opts
+    all_options = options conf sec
+    prefix = cmd ++ "-"
+    opts = reorderMySQLOptions $
+        map (fromJust . stripPrefix prefix) (filter (isPrefixOf prefix) all_options)
+    mkArgument name = case name of
+        "databases" -> "--" ++ name ++ " " ++ value
+        _ -> "--" ++ name ++ "=" ++ show value
+        where value = get conf sec (prefix ++ name)
+
+-- defaults-file and defaults-extra-file
+-- must go first, see http://bugs.mysql.com/bug.php?id=31312
+-- databases and all-databases at the end is just a matter of taste
+reorderMySQLOptions :: [String] -> [String]
+reorderMySQLOptions a = fst ++ other ++ lst
+    where (fst, a') = partition (`elem` first) a
+          (lst, other) = partition (`elem` last) a'
+          first = ["defaults-file", "defaults-extra-file"]
+          last = ["databases", "all-databases"]
 

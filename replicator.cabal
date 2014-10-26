@@ -25,7 +25,6 @@ source-repository head
 executable repl
     main-is: Replicator.hs
     other-modules:
-        Replicator.CommandLine,
         Replicator.Compress,
         Replicator.Config,
         Replicator.Regex
