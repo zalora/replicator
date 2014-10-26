@@ -36,6 +36,10 @@ log-pos   = auto
 mysql     = mysql
 mysqldump = mysqldump
 mysqldump-master-data = 2
+start-slave-sql  = START SLAVE;
+stop-slave-sql   = STOP SLAVE;
+begin-import-sql = SET autocommit = 0; SET unique_checks = 0; SET foreign_key_checks = 0;
+end-import-sql   = COMMIT;
 |]
 
 defaultCP = forceEither $ Cf.readstring
