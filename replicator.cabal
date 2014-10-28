@@ -29,7 +29,7 @@ executable repl
         Replicator.Config,
         Replicator.Regex
     build-depends:
-        base >=4.6 && <4.7,
+        base >=4.6 && <5,
         ConfigFile,
         MissingH,
         bytestring,
