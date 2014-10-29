@@ -11,10 +11,13 @@ import Data.Char (toUpper, toLower, isAlpha)
 import Data.Either.Utils (forceEither)
 import Data.List (union, isPrefixOf, stripPrefix, partition, intercalate)
 import Data.Maybe (fromJust)
+import Data.String.Utils (startswith)
 import Text.RawString.QQ (r)
 
 get :: Cf.ConfigParser -> Cf.SectionSpec -> Cf.OptionSpec -> String
-get conf sec opt = forceEither $ Cf.interpolatingAccess 10  conf sec opt
+get conf sec opt = v' where
+    v' = if startswith "sql-" opt && last v /= ';' then v ++ ";" else v
+    v = forceEither $ Cf.interpolatingAccess 10 conf sec opt
 
 openConfig :: FilePath -> IO Cf.ConfigParser
 openConfig f = (addOptions . forceEither) <$> Cf.readfile defaultCP f
