@@ -49,6 +49,9 @@ defineFlag "f:force" False "Force action, e. g. overwrite dumps"
 defineFlag "a:all" False "Act on all channels"
 defineFlag "c:config" "channels.ini" "Path to configuration file"
 
+-- See https://github.com/errge/hflags/issues/8
+$(return [])
+
 type Action = Cf.ConfigParser -> Cf.SectionSpec -> IO Cf.ConfigParser
 
 runSql :: Cf.ConfigParser -> Cf.SectionSpec -> String -> IO Cf.ConfigParser
