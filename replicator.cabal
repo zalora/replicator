@@ -1,5 +1,5 @@
 name: replicator
-version: 0.2.0
+version: 0.3.0
 synopsis: Automate creating MySQL multi-source slaves
 description:
     This is a utility to automate DB replication for
