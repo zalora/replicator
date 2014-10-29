@@ -87,11 +87,13 @@ makeCommand cmd conf sec = unwords $ cmd':args where
     cmd' = get conf sec cmd
     args = map mkArgument opts
     opts = reorderMySQLOptions $ getOptions cmd conf sec
-    mkArgument name = "--" ++ name ++ case name of
-        "databases" -> " " ++ value
-        "password"  -> "='" ++ value ++ "'"
-        _           -> "=" ++ show value
+    mkArgument name = case name of
+        "database"  -> value
+        "databases" -> o ++ " " ++ value
+        "password"  -> o ++ "='" ++ value ++ "'"
+        _           -> o ++ "=" ++ show value
         where value = getOption cmd conf sec name
+              o = "--" ++ name
 
 -- defaults-file and defaults-extra-file
 -- must go first, see http://bugs.mysql.com/bug.php?id=31312
@@ -101,7 +103,7 @@ reorderMySQLOptions a = b ++ m ++ e
     where (b, a') = partition (`elem` begin) a
           (e, m) = partition (`elem` end) a'
           begin = ["defaults-file", "defaults-extra-file"]
-          end = ["databases", "all-databases"]
+          end = ["database", "databases", "all-databases"]
 
 defaults :: String
 defaults = [r|[DEFAULT]
