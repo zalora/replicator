@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 module Main where
@@ -31,18 +32,23 @@ import Replicator.Regex (masterLog, MasterLog(..), (=~))
 
 import Paths_replicator (version) -- from cabal
 import Data.Version (showVersion)
+import Text.RawString.QQ (r)
 
 usage :: String
-usage = "replicator " ++ showVersion version ++ ". " ++
-        "Automate creating MySQL multi-source slaves\n" ++
-        "Usage: repl [options] {command} [channel ...]\n\n" ++
-        "Commands:\n\n" ++
-        "  list   - list all channels defined in the config file\n" ++
-        "  dump   - only create dump for the given channels\n" ++
-        "  stop   - stop replication for the given channels\n" ++
-        "  start  - start replication for the given channels\n" ++
-        "  repl   - replicate the given channels from scratch\n\n" ++
-        "Options:"
+usage = "replicator " ++ showVersion version ++ [r|
+Automate creating MySQL multi-source slaves
+
+Usage: repl [options] {command} [channel ...]
+
+Commands:
+
+  list   - list all channels defined in the config file
+  dump   - only create dump for the given channels
+  stop   - stop replication for the given channels
+  start  - start replication for the given channels
+  repl   - replicate the given channels from scratch
+
+Options:|]
 
 defineFlag "f:force" False "Force action, e. g. overwrite dumps"
 defineFlag "a:all" False "Act on all channels"
@@ -104,7 +110,7 @@ actionMasterLog conf sec = if log_file /= "auto" && log_pos /= "auto"
                         Nothing -> liftIO $ writeIORef out Nothing
                         Just bs -> case BSC.unpack bs =~ masterLog of
                             Nothing -> grep
-                            Just r -> liftIO $ writeIORef out (Just r)
+                            Just m -> liftIO $ writeIORef out (Just m)
 
 actionDump :: Action
 actionDump conf sec = do
