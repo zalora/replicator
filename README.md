@@ -30,7 +30,6 @@ Run
 Commands:
 
   * `list`   - list all channels defined in the config file
-  * `info`   - show essential options for the give channels
   * `dump`   - only create dump for the given channels
   * `stop`   - stop replication for the given channels
   * `start`  - start replication for the given channels

@@ -25,7 +25,7 @@ import qualified Pipes.Group as PG
 
 import qualified Lens.Family as LF
 
-import Replicator.Config (get, openConfig, makeCommandLine)
+import Replicator.Config (get, openConfig)
 import Replicator.Compress (compress, decompress)
 import Replicator.Regex (masterLog, MasterLog(..), (=~))
 
@@ -38,7 +38,6 @@ usage = "replicator " ++ showVersion version ++ ". " ++
         "Usage: repl [options] {command} [channel ...]\n\n" ++
         "Commands:\n\n" ++
         "  list   - list all channels defined in the config file\n" ++
-        "  info   - show essential options for the give channels\n" ++
         "  dump   - only create dump for the given channels\n" ++
         "  stop   - stop replication for the given channels\n" ++
         "  start  - start replication for the given channels\n" ++
@@ -51,39 +50,23 @@ defineFlag "c:config" "channels.ini" "Path to configuration file"
 
 type Action = Cf.ConfigParser -> Cf.SectionSpec -> IO Cf.ConfigParser
 
-runSql :: Cf.ConfigParser -> Cf.SectionSpec -> String -> IO Cf.ConfigParser
-runSql conf sec cmd = if null sql then return conf else do
+runSql :: String -> Cf.ConfigParser -> Cf.SectionSpec -> IO Cf.ConfigParser
+runSql cmd conf sec = if null sql then return conf else do
     putStrLn $ "Executing " ++ show sql
     runShell $ yield (BSC.pack sql) >?> pipeCmd mysql >->
                 ignoreOut >-> PBS.toHandle stderr
     return conf
-    where mysql = makeCommandLine conf sec "mysql"
+    where mysql = get conf sec "cmd-mysql"
           sql = get conf sec cmd
 
 actionStopSlave :: Action
-actionStopSlave conf sec = runSql conf sec "stop-slave-sql"
+actionStopSlave = runSql "sql-stop-slave"
 
 actionStartSlave :: Action
-actionStartSlave conf sec = runSql conf sec "start-slave-sql"
+actionStartSlave = runSql "sql-start-slave"
 
 actionChangeMaster :: Action
-actionChangeMaster conf sec = do
-    conf' <- actionMasterLog conf sec
-    runSql conf' sec "change-master-sql"
-
-actionInfo :: Action
-actionInfo conf sec = do
-    putStrLn $ "[" ++ channel ++ "]"
-    mapM_ putStrLn (options ++ commands)
-    putStrLn ""
-    return conf
-    where channel = get conf sec "channel"
-          options = map (\k -> k ++ " = " ++ get conf sec k)
-                    [ "dump", "change-master-sql", "stop-slave-sql"
-                    , "start-slave-sql", "begin-import-sql", "end-import-sql" ]
-          commands = map (\c -> c ++ " = " ++ makeCommandLine conf sec c)
-                        [ "mysqldump", "mysql" ]
-
+actionChangeMaster = runSql "sql-change-master"
 
 printError :: MonadIO m => Pipe (Either BSC.ByteString BSC.ByteString) BSC.ByteString m ()
 printError = forever $ await >>= \case
@@ -103,15 +86,15 @@ actionMasterLog conf sec = if log_file /= "auto" && log_pos /= "auto"
         Nothing -> error "Could not get master log position"
         Just (MasterLog file pos) -> do
             rv <- runErrorT $ do
-                conf' <- Cf.set conf sec "log-file" file
-                Cf.set conf' sec "log-pos" (show pos)
+                conf' <- Cf.set conf sec "master-log-file" file
+                Cf.set conf' sec "master-log-pos" (show pos)
             case rv of
                 Left _ -> error "Failed to set master log position"
                 Right cf -> return cf
     where
         nlines = 60
-        log_file = get conf sec "log-file"
-        log_pos = get conf sec "log-pos"
+        log_file = get conf sec "master-log-file"
+        log_pos = get conf sec "master-log-pos"
         dump = get conf sec "dump"
         getMasterLog' out = withFile dump ReadMode ( \h -> runShell $
             handful (decompress dump $ PBS.fromHandle h) >?> grep )
@@ -136,7 +119,7 @@ actionDump conf sec = do
     where
         dump = get conf sec "dump"
         dump_tmp = dump ++ ".tmp"
-        mysqldump = makeCommandLine conf sec "mysqldump"
+        mysqldump = get conf sec "cmd-mysqldump"
 
 actionImport :: Action
 actionImport conf sec = do
@@ -145,15 +128,14 @@ actionImport conf sec = do
         sql h >?> pipeCmd mysql >-> ignoreOut >-> PBS.toHandle stderr )
     return conf
     where
-        begin = get conf sec "begin-import-sql"
-        end = get conf sec "end-import-sql"
+        begin = get conf sec "sql-begin-import"
+        end = get conf sec "sql-end-import"
         dump = get conf sec "dump"
-        mysql = makeCommandLine conf sec "mysql"
+        mysql = get conf sec "cmd-mysql"
         sql h = do
             yield (BSC.pack $ begin ++ "\n")
             decompress dump $ PBS.fromHandle h
             yield (BSC.pack $ end ++ "\n")
-
 
 run :: [Action] -> Action
 run [] c _ = return c
@@ -161,6 +143,7 @@ run (a:aa) c s = do c' <- a c s; run aa c' s
 
 actionReplicate :: Action
 actionReplicate = run [ actionDump
+                      , actionMasterLog
                       , actionStopSlave
                       , actionImport
                       , actionChangeMaster
@@ -180,11 +163,10 @@ main = $initHFlags usage >> do
     when (null arguments) $ error "No command specified"
     when (not $ null missing) $ error $ "No such channels: " ++ unwords missing
     case cmd of
-        "list" -> putStrLn $ unwords all_channels
-        "info" -> mapM_ (actionInfo conf) sections
-        "dump" -> mapM_ (actionDump conf) sections
-        "stop" -> mapM_ (actionStopSlave conf) sections
+        "list"  -> putStrLn $ unwords all_channels
+        "dump"  -> mapM_ (actionDump conf) sections
+        "stop"  -> mapM_ (actionStopSlave conf) sections
         "start" -> mapM_ (actionStartSlave conf) sections
-        "repl" -> mapM_ (actionReplicate conf) sections
-        _      -> error $ "Unknown command: " ++ cmd
+        "repl"  -> mapM_ (actionReplicate conf) sections
+        _       -> error $ "Unknown command: " ++ cmd
 
