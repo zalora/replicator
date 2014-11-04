@@ -69,6 +69,7 @@ makeSqlChangeMaster conf sec = "CHANGE MASTER" ++ channelSQL conf sec ++
                 tr c = c
                 value' = case name' of
                     "MASTER_LOG_POS" -> value
+                    "MASTER_SSL" -> value
                     _ -> "'" ++ value ++ "'"
 
 makeSqlSlave :: String -> Cf.ConfigParser -> Cf.SectionSpec -> String
