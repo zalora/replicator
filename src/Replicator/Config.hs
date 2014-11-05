@@ -119,7 +119,7 @@ mysqldump = mysqldump
 mysqldump-compress = 1
 mysqldump-host = %(master-host)s
 mysqldump-master-data = 2
-sql-begin-import = SET autocommit = 0; SET unique_checks = 0; SET foreign_key_checks = 0;
+sql-begin-import = SET AUTOCOMMIT=0;
 sql-end-import = COMMIT;
 |]
 
