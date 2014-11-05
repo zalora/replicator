@@ -43,10 +43,11 @@ Usage: repl [options] {command} [channel ...]
 Commands:
 
   list   - list all channels defined in the config file
-  dump   - only create dump for the given channels
-  stop   - stop replication for the given channels
-  start  - start replication for the given channels
   repl   - replicate the given channels from scratch
+  dump   - only create dump for the given channels
+
+  stop   - pause replication for the given channels
+  start  - continue replication for the given channels
 
 Options:|]
 
