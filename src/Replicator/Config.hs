@@ -108,7 +108,7 @@ reorderMySQLOptions a = b ++ m ++ e
 
 defaults :: String
 defaults = [r|[DEFAULT]
-dump = %(dump-dir)s/%(channel)s.mysql.gz
+dump = %(dump-dir)s/replicator-%(channel)s.mysql.gz
 dump-dir = .
 master-host = localhost
 master-log-file = auto
