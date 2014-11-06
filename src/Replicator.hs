@@ -15,7 +15,7 @@ import Control.Monad.IO.Class (liftIO, MonadIO)
 
 import HFlags (defineFlag, initHFlags, arguments)
 
-import System.Directory (renameFile, doesFileExist)
+import System.Directory (renameFile, doesFileExist, removeFile)
 import System.IO (stderr, withFile, IOMode(WriteMode, ReadMode))
 
 import Pipes ((>->), await, yield, Pipe, Producer, for)
@@ -45,6 +45,7 @@ Commands:
   list   - list all channels defined in the config file
   repl   - replicate the given channels from scratch
   dump   - only create dump for the given channels
+  clean  - remove dumps and temporary files for the given channels
 
   stop   - pause replication for the given channels
   start  - continue replication for the given channels
@@ -158,6 +159,16 @@ actionReplicate = run [ actionDump
                       , actionStartSlave
                       ]
 
+actionClean :: Action
+actionClean conf sec = mapM_ rm files >> return conf where
+    rm f = do
+        exists <- doesFileExist f
+        when exists $ do
+            putStrLn $ "Removing " ++ show f
+            removeFile f
+    dump = get conf sec "dump"
+    files = [ dump, dump ++ ".tmp" ]
+
 main :: IO()
 main = $initHFlags usage >> do
     conf <- openConfig flags_config
@@ -172,9 +183,10 @@ main = $initHFlags usage >> do
     when (not $ null missing) $ error $ "No such channels: " ++ unwords missing
     case cmd of
         "list"  -> putStrLn $ unwords all_channels
+        "repl"  -> mapM_ (actionReplicate conf) sections
         "dump"  -> mapM_ (actionDump conf) sections
+        "clean" -> mapM_ (actionClean conf) sections
         "stop"  -> mapM_ (actionStopSlave conf) sections
         "start" -> mapM_ (actionStartSlave conf) sections
-        "repl"  -> mapM_ (actionReplicate conf) sections
         _       -> error $ "Unknown command: " ++ cmd
 
