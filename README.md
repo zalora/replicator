@@ -30,10 +30,11 @@ Run
 Commands:
 
   * `list`   - list all channels defined in the config file
-  * `dump`   - only create dump for the given channels
-  * `stop`   - stop replication for the given channels
-  * `start`  - start replication for the given channels
   * `repl`   - replicate the given channels from scratch
+  * `dump`   - only create dump for the given channels
+  * `clean`  - remove dumps and temporary files for the given channels
+  * `stop`   - pause replication for the given channels
+  * `start`  - continue replication for the given channels
 
 The following command will create an SQL dump for channel `foo` defined in
 `channels.ini`, import it, set up master options and start replication:
