@@ -114,10 +114,12 @@ master-log-file = auto
 master-log-pos  = auto
 multi-source = no
 mysql = mysql
+mysql-default-character-set = utf8
 mysql-host = localhost
 mysql-user = root
 mysqldump = mysqldump
 mysqldump-compress = 1
+mysqldump-default-character-set = utf8
 mysqldump-host = %(master-host)s
 mysqldump-master-data = 2
 sql-begin-import = SET AUTOCOMMIT=0;
