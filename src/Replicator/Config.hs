@@ -110,11 +110,12 @@ defaults :: String
 defaults = [r|[DEFAULT]
 dump = %(dump-dir)s/replicator-%(channel)s.mysql.gz
 dump-dir = .
-master-host = localhost
 master-log-file = auto
 master-log-pos  = auto
 multi-source = no
 mysql = mysql
+mysql-host = localhost
+mysql-user = root
 mysqldump = mysqldump
 mysqldump-compress = 1
 mysqldump-host = %(master-host)s
