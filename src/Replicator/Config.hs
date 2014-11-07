@@ -118,6 +118,7 @@ mysql-default-character-set = utf8
 mysql-host = localhost
 mysql-user = root
 mysqldump = mysqldump
+mysqldump-comments = 0
 mysqldump-compress = 1
 mysqldump-default-character-set = utf8
 mysqldump-host = %(master-host)s
