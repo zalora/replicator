@@ -22,7 +22,7 @@ source-repository head
   type: git
   location: https://github.com/zalora/replicator.git
 
-executable repl
+executable replicator
     main-is: Replicator.hs
     other-modules:
         Replicator.Compress,

@@ -38,7 +38,7 @@ usage :: String
 usage = "replicator " ++ showVersion version ++ [r|
 Automate creating MySQL multi-source slaves
 
-Usage: repl [options] {command} [channel ...]
+Usage: replicator [options] {command} [channel ...]
 
 Commands:
 

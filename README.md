@@ -25,7 +25,7 @@ See samples under the [examples](examples) directory.
 Run
 ===
 
-    repl [options] {command} [channel ...]
+    replicator [options] {command} [channel ...]
 
 Commands:
 
@@ -39,7 +39,7 @@ Commands:
 The following command will create an SQL dump for channel `foo` defined in
 `channels.ini`, import it, set up master options and start replication:
 
-    repl repl foo -f
+    replicator repl foo -f
 
-Run `repl -h` for help.
+Run `replicator -h` for help.
 
