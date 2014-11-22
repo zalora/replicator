@@ -1,11 +1,11 @@
 {-# LANGUAGE QuasiQuotes #-}
 module Replicator.Config (
+    Cf.sections,
     get,
     openConfig,
     set
 ) where
 
-import qualified Data.ConfigFile as Cf
 import Control.Applicative ((<$>))
 import Data.Char (toUpper, toLower, isAlpha)
 import Data.Either.Utils (forceEither)
@@ -13,6 +13,7 @@ import Data.List (union, isPrefixOf, stripPrefix, partition, intercalate)
 import Data.Maybe (fromJust)
 import Data.String.Utils (startswith)
 import Text.RawString.QQ (r)
+import qualified Data.ConfigFile as Cf
 
 get :: Cf.ConfigParser -> Cf.SectionSpec -> Cf.OptionSpec -> String
 get conf sec opt = v' where
