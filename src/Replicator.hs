@@ -15,7 +15,7 @@ import Control.Monad.IO.Class (liftIO, MonadIO)
 
 import HFlags (defineFlag, initHFlags, arguments)
 
-import System.Directory (renameFile, doesFileExist, removeFile)
+import System.Directory (doesFileExist, removeFile)
 import System.IO (stderr, withFile, IOMode(WriteMode, ReadMode))
 
 import Pipes ((>->), await, yield, Pipe, Producer, for)
@@ -120,14 +120,12 @@ actionDump conf sec = do
     exists <- doesFileExist dump
     when (not exists || flags_force) $ do
         putStrLn $ "Creating " ++ show dump
-        withFile dump_tmp WriteMode ( \h -> runShell $
+        withFile dump WriteMode ( \h -> runShell $
             for (compress dump $ producerCmd'' mysqldump)
                 (liftIO . BSC.hPutStr h) )
-        renameFile dump_tmp dump
     return conf
     where
         dump = get conf sec "dump"
-        dump_tmp = dump ++ ".tmp"
         mysqldump = get conf sec "cmd-mysqldump"
 
 actionImport :: Action
@@ -167,7 +165,7 @@ actionClean conf sec = mapM_ rm files >> return conf where
             putStrLn $ "Removing " ++ show f
             removeFile f
     dump = get conf sec "dump"
-    files = [ dump, dump ++ ".tmp" ]
+    files = [ dump ]
 
 main :: IO()
 main = $initHFlags usage >> do
