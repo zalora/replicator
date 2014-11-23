@@ -124,6 +124,7 @@ mysqldump-compress = 1
 mysqldump-default-character-set = utf8
 mysqldump-host = %(master-host)s
 mysqldump-master-data = 2
+mysqldump-single-transaction = 1
 sql-begin-import = SET AUTOCOMMIT=0;
 sql-end-import = COMMIT;
 |]
