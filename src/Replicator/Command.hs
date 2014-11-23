@@ -1,5 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
-module Replicator.Action (
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE RecordWildCards #-}
+module Replicator.Command (
     clean,
     createDump,
     replicate,
@@ -18,8 +20,9 @@ import Pipes.Safe (MonadSafe)
 import Pipes.Shell ((>?>), runShell, producerCmd, pipeCmd, ignoreOut)
 import Replicator.Compress (compress, decompress)
 import Replicator.Config (get)
-import Replicator.Flags (flags_force)
+import Replicator.Flags (flags_force, flags_timeline)
 import Replicator.Regex (masterLog, MasterLog(..), (=~))
+import Replicator.Timeline (timestamp, seconds)
 import System.Directory (doesFileExist, removeFile)
 import System.IO (stderr, withFile, IOMode(WriteMode, ReadMode))
 import qualified Data.ByteString.Char8 as BSC
@@ -28,14 +31,25 @@ import qualified Lens.Family as LF
 import qualified Pipes.ByteString as PBS
 import qualified Pipes.Group as PG
 
-type Action = Cf.ConfigParser -> Cf.SectionSpec -> IO Cf.ConfigParser
+data Context = Context {
+    conf :: Cf.ConfigParser
+ ,  sec  :: Cf.SectionSpec
+ ,  zero :: Integer
+}
 
-runSql :: String -> Cf.ConfigParser -> Cf.SectionSpec -> IO Cf.ConfigParser
-runSql cmd conf sec = if null sql then return conf else do
-    putStrLn $ "Executing " ++ show sql
+type Task = Context -> IO Context
+type Command = Cf.ConfigParser -> Cf.SectionSpec -> IO ()
+
+
+quack :: Integer -> String -> IO()
+quack z m = if flags_timeline then timestamp z m else putStrLn m
+
+runSql :: String -> Task
+runSql cmd Context{..} = if null sql then return Context{..} else do
+    quack zero $ "Executing " ++ show sql
     runShell $ yield (BSC.pack sql) >?> pipeCmd mysql >->
                 ignoreOut >-> PBS.toHandle stderr
-    return conf
+    return Context{..}
     where mysql = get conf sec "cmd-mysql"
           sql = get conf sec cmd
 
@@ -50,19 +64,19 @@ producerCmd'' cmd = producerCmd cmd >-> printError
 
 
 
-stopSlave :: Action
-stopSlave = runSql "sql-stop-slave"
+taskStopSlave :: Task
+taskStopSlave = runSql "sql-stop-slave"
 
-startSlave :: Action
-startSlave = runSql "sql-start-slave"
+taskStartSlave :: Task
+taskStartSlave = runSql "sql-start-slave"
 
-changeMaster :: Action
-changeMaster = runSql "sql-change-master"
+taskChangeMaster :: Task
+taskChangeMaster = runSql "sql-change-master"
 
 -- TODO: get rid of IORef
-getMasterLog :: Action
-getMasterLog conf sec = if log_file /= "auto" && log_pos /= "auto"
-    then return conf else do
+taskGetMasterLog :: Task
+taskGetMasterLog Context{..} = if log_file /= "auto" && log_pos /= "auto"
+    then return Context{..} else do
     master_log <- newIORef Nothing
     getMasterLog' master_log
     readIORef master_log >>= \case
@@ -73,7 +87,7 @@ getMasterLog conf sec = if log_file /= "auto" && log_pos /= "auto"
                 Cf.set conf' sec "master-log-pos" (show pos)
             case rv of
                 Left _ -> error "Failed to set master log position"
-                Right cf -> return cf
+                Right cf -> return Context {conf = cf, ..}
     where
         nlines = 60
         log_file = get conf sec "master-log-file"
@@ -89,25 +103,25 @@ getMasterLog conf sec = if log_file /= "auto" && log_pos /= "auto"
                             Nothing -> grep
                             Just m -> liftIO $ writeIORef out (Just m)
 
-createDump :: Action
-createDump conf sec = do
+taskCreateDump :: Task
+taskCreateDump Context{..} = do
     exists <- doesFileExist dump
     when (not exists || flags_force) $ do
-        putStrLn $ "Creating " ++ show dump
+        quack zero $ "Creating " ++ show dump
         withFile dump WriteMode ( \h -> runShell $
             for (compress dump $ producerCmd'' mysqldump)
                 (liftIO . BSC.hPutStr h) )
-    return conf
+    return Context{..}
     where
         dump = get conf sec "dump"
         mysqldump = get conf sec "cmd-mysqldump"
 
-importDump :: Action
-importDump conf sec = do
-    putStrLn $ "Importing " ++ show dump
+taskImportDump :: Task
+taskImportDump Context{..} = do
+    quack zero $ "Importing " ++ show dump
     withFile dump ReadMode ( \h -> runShell $
         sql h >?> pipeCmd mysql >-> ignoreOut >-> PBS.toHandle stderr )
-    return conf
+    return Context{..}
     where
         begin = get conf sec "sql-begin-import"
         end = get conf sec "sql-end-import"
@@ -118,21 +132,9 @@ importDump conf sec = do
             decompress dump $ PBS.fromHandle h
             yield (BSC.pack $ end ++ "\n")
 
-run :: [Action] -> Action
-run [] c _ = return c
-run (a:aa) c s = do c' <- a c s; run aa c' s
 
-replicate :: Action
-replicate = run [ createDump
-                , getMasterLog
-                , stopSlave
-                , importDump
-                , changeMaster
-                , startSlave
-                ]
-
-clean :: Action
-clean conf sec = mapM_ rm files >> return conf where
+taskClean :: Task
+taskClean Context{..} = mapM_ rm files >> return Context{..} where
     rm f = do
         exists <- doesFileExist f
         when exists $ do
@@ -140,3 +142,42 @@ clean conf sec = mapM_ rm files >> return conf where
             removeFile f
     dump = get conf sec "dump"
     files = [ dump ]
+
+
+taskDone :: Task
+taskDone Context{..} = quack zero "Done." >> return Context{..}
+
+run :: [Task] -> Command
+run tasks conf sec = if flags_timeline
+    then do
+        zero <- seconds
+        run' Context{conf, sec, zero} (tasks ++ [taskDone])
+    else do
+        run' Context{conf, sec, zero = 0} tasks
+    where
+        run' _ [] = return ()
+        run' ctx (t:tt) = do
+            ctx' <- t ctx;
+            run' ctx' tt
+
+replicate :: Command
+replicate = run [ taskCreateDump
+                , taskGetMasterLog
+                , taskStopSlave
+                , taskImportDump
+                , taskChangeMaster
+                , taskStartSlave
+                ]
+
+clean :: Command
+clean = run [ taskClean ]
+
+stopSlave :: Command
+stopSlave = run [ taskStopSlave ]
+
+startSlave :: Command
+startSlave = run [ taskStartSlave ]
+
+createDump :: Command
+createDump = run [ taskCreateDump ]
+

@@ -11,7 +11,7 @@ import Paths_replicator (version) -- from cabal
 import Replicator.Config (get, openConfig, sections)
 import Replicator.Flags (flags_all, flags_config)
 import Text.RawString.QQ (r)
-import qualified Replicator.Action as Action
+import qualified Replicator.Command as Cmd
 
 usage :: String
 usage = "replicator " ++ showVersion version ++ [r|
@@ -45,10 +45,10 @@ main = $initHFlags usage >> do
     when (not $ null missing) $ error $ "No such channels: " ++ unwords missing
     case cmd of
         "list"  -> putStrLn $ unwords all_channels
-        "repl"  -> mapM_ (Action.replicate conf) secs
-        "dump"  -> mapM_ (Action.createDump conf) secs
-        "clean" -> mapM_ (Action.clean conf) secs
-        "stop"  -> mapM_ (Action.stopSlave conf) secs
-        "start" -> mapM_ (Action.startSlave conf) secs
+        "repl"  -> mapM_ (Cmd.replicate conf) secs
+        "dump"  -> mapM_ (Cmd.createDump conf) secs
+        "clean" -> mapM_ (Cmd.clean conf) secs
+        "stop"  -> mapM_ (Cmd.stopSlave conf) secs
+        "start" -> mapM_ (Cmd.startSlave conf) secs
         _       -> error $ "Unknown command: " ++ cmd
 
