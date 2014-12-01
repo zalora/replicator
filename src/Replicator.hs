@@ -45,10 +45,10 @@ main = $initHFlags usage >> do
     when (not $ null missing) $ error $ "No such channels: " ++ unwords missing
     case cmd of
         "list"  -> putStrLn $ unwords all_channels
-        "repl"  -> mapM_ (Cmd.replicate conf) secs
-        "dump"  -> mapM_ (Cmd.createDump conf) secs
-        "clean" -> mapM_ (Cmd.clean conf) secs
-        "stop"  -> mapM_ (Cmd.stopSlave conf) secs
-        "start" -> mapM_ (Cmd.startSlave conf) secs
+        "repl"  -> Cmd.replicate conf secs
+        "dump"  -> Cmd.createDump conf secs
+        "clean" -> Cmd.clean conf secs
+        "stop"  -> Cmd.stopSlave conf secs
+        "start" -> Cmd.startSlave conf secs
         _       -> error $ "Unknown command: " ++ cmd
 

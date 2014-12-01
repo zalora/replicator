@@ -38,7 +38,7 @@ data Context = Context {
 }
 
 type Task = Context -> IO Context
-type Command = Cf.ConfigParser -> Cf.SectionSpec -> IO ()
+type Command = Cf.ConfigParser -> [Cf.SectionSpec] -> IO ()
 
 
 quack :: Integer -> String -> IO()
@@ -144,16 +144,11 @@ taskClean Context{..} = mapM_ rm files >> return Context{..} where
     files = [ dump ]
 
 
-taskDone :: Task
-taskDone Context{..} = quack zero "Done." >> return Context{..}
-
 run :: [Task] -> Command
-run tasks conf sec = if flags_timeline
-    then do
-        zero <- seconds
-        run' Context{conf, sec, zero} (tasks ++ [taskDone])
-    else do
-        run' Context{conf, sec, zero = 0} tasks
+run tasks conf sections = do
+    zero <- if flags_timeline then seconds else return 0
+    mapM_ (\s -> run' Context{sec = s, ..} tasks) sections
+    when (flags_timeline) $ quack zero "Done."
     where
         run' _ [] = return ()
         run' ctx (t:tt) = do
