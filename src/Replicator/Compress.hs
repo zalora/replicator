@@ -8,7 +8,7 @@ import qualified Pipes.GZip as GZip
 
 compress :: MonadSafe m => String -> Producer ByteString m () -> Producer ByteString m ()
 compress filename = case takeExtension filename of
-    ".gz" -> GZip.compress GZip.defaultCompression
+    ".gz" -> GZip.compress GZip.bestCompression
     _ -> id
 
 decompress :: MonadSafe m => String -> Producer ByteString m () -> Producer ByteString m ()
