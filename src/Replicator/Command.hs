@@ -20,11 +20,12 @@ import Pipes.Safe (MonadSafe)
 import Pipes.Shell ((>?>), runShell, producerCmd, pipeCmd, ignoreOut)
 import Replicator.Compress (compress, decompress)
 import Replicator.Config (get)
-import Replicator.Flags (flags_force, flags_timeline)
+import Replicator.Flags (flags_force, flags_timeline, flags_parallel)
 import Replicator.Regex (masterLog, MasterLog(..), (=~))
 import Replicator.Timeline (timestamp, seconds)
 import System.Directory (doesFileExist, removeFile)
 import System.IO (stderr, withFile, IOMode(WriteMode, ReadMode))
+import qualified Control.Monad.Parallel as Parallel
 import qualified Data.ByteString.Char8 as BSC
 import qualified Data.ConfigFile as Cf
 import qualified Lens.Family as LF
@@ -147,9 +148,10 @@ taskClean Context{..} = mapM_ rm files >> return Context{..} where
 run :: [Task] -> Command
 run tasks conf sections = do
     zero <- if flags_timeline then seconds else return 0
-    mapM_ (\s -> run' Context{sec = s, ..} tasks) sections
+    _ <- map' (\s -> run' Context{sec = s, ..} tasks) sections
     when (flags_timeline) $ quack zero "Done."
     where
+        map' = if flags_parallel then Parallel.mapM else mapM
         run' _ [] = return ()
         run' ctx (t:tt) = do
             ctx' <- t ctx;
