@@ -5,6 +5,7 @@ module Replicator.Command (
     clean,
     createDump,
     replicate,
+    restartSlave,
     startSlave,
     stopSlave
 ) where
@@ -174,6 +175,9 @@ stopSlave = run [ taskStopSlave ]
 
 startSlave :: Command
 startSlave = run [ taskStartSlave ]
+
+restartSlave :: Command
+restartSlave = run [ taskStopSlave, taskStartSlave ]
 
 createDump :: Command
 createDump = run [ taskCreateDump ]

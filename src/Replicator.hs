@@ -26,8 +26,9 @@ Commands:
   dump   - only create dump for the given channels
   clean  - remove dumps and temporary files for the given channels
 
-  stop   - pause replication for the given channels
-  start  - continue replication for the given channels
+  stop    - pause replication for the given channels
+  start   - continue replication for the given channels
+  restart - stop, then start
 
 Options:|]
 
@@ -44,11 +45,12 @@ main = $initHFlags usage >> do
     when (null arguments) $ error "No command specified"
     when (not $ null missing) $ error $ "No such channels: " ++ unwords missing
     case cmd of
-        "list"  -> putStrLn $ unwords all_channels
-        "repl"  -> Cmd.replicate conf secs
-        "dump"  -> Cmd.createDump conf secs
-        "clean" -> Cmd.clean conf secs
-        "stop"  -> Cmd.stopSlave conf secs
-        "start" -> Cmd.startSlave conf secs
-        _       -> error $ "Unknown command: " ++ cmd
+        "list"    -> putStrLn $ unwords all_channels
+        "repl"    -> Cmd.replicate conf secs
+        "dump"    -> Cmd.createDump conf secs
+        "clean"   -> Cmd.clean conf secs
+        "stop"    -> Cmd.stopSlave conf secs
+        "start"   -> Cmd.startSlave conf secs
+        "restart" -> Cmd.restartSlave conf secs
+        _         -> error $ "Unknown command: " ++ cmd
 
