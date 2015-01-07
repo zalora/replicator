@@ -14,6 +14,7 @@ copyright: 2014, Zalora South East Asia Pte. Ltd
 category: Database
 build-type: Simple
 extra-source-files:
+    CONFIGURATION.md
     README.md
     examples/*.ini
 cabal-version: >=1.10

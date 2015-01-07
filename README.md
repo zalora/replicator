@@ -20,7 +20,7 @@ Installation
 
 Configuration
 =============
-See samples under the [examples](examples) directory.
+See the [examples](EXAMPLES.md) and [configuration details](CONFIGURATION.md).
 
 Run
 ===
