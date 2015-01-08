@@ -125,7 +125,7 @@ Option `databases = foo bar` will result in `--databases foo bar` *at the end* o
 Option `database = foo` will result in `foo` *at the end* of `cmd-mysqldump`.
 
 Note that `mysqldump-master-data = 1` is not recommented, but should be safe.
-While `mysqldump-master-data = 0` will make impossible automatic [channel configuration](#master--options),
+While `mysqldump-master-data = 0` will make impossible automatic [channel configuration](#master-options),
 you will need to figure out and specify `master-log-file` and `master-log-pos`.
 
 mysql options
