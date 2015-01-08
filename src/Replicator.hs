@@ -8,7 +8,7 @@ import Data.List (sort)
 import Data.Version (showVersion)
 import HFlags (initHFlags, arguments)
 import Paths_replicator (version) -- from cabal
-import Replicator.Config (get, openConfig, sections)
+import Replicator.Config (get, openConfig, sections, defaults)
 import Replicator.Flags (flags_all, flags_config)
 import Text.RawString.QQ (r)
 import qualified Replicator.Command as Cmd
@@ -21,7 +21,9 @@ Usage: replicator [options] {command} [channel ...]
 
 Commands:
 
-  list   - list all channels defined in the config file
+  defaults - print built-in default options
+  list     - list all channels defined in the config file
+
   repl   - replicate the given channels from scratch
   dump   - only create dump for the given channels
   clean  - remove dumps and temporary files for the given channels
@@ -45,12 +47,14 @@ main = $initHFlags usage >> do
     when (null arguments) $ error "No command specified"
     when (not $ null missing) $ error $ "No such channels: " ++ unwords missing
     case cmd of
-        "list"    -> putStrLn $ unwords all_channels
-        "repl"    -> Cmd.replicate conf secs
-        "dump"    -> Cmd.createDump conf secs
-        "clean"   -> Cmd.clean conf secs
-        "stop"    -> Cmd.stopSlave conf secs
-        "start"   -> Cmd.startSlave conf secs
-        "restart" -> Cmd.restartSlave conf secs
-        _         -> error $ "Unknown command: " ++ cmd
+        "defaults" -> putStr $ defaults
+        "default"  -> putStr $ defaults
+        "list"     -> putStrLn $ unwords all_channels
+        "repl"     -> Cmd.replicate conf secs
+        "dump"     -> Cmd.createDump conf secs
+        "clean"    -> Cmd.clean conf secs
+        "stop"     -> Cmd.stopSlave conf secs
+        "start"    -> Cmd.startSlave conf secs
+        "restart"  -> Cmd.restartSlave conf secs
+        _          -> error $ "Unknown command: " ++ cmd
 

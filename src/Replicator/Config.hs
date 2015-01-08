@@ -1,6 +1,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 module Replicator.Config (
     Cf.sections,
+    defaults,
     get,
     openConfig,
     set

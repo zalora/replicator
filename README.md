@@ -29,6 +29,7 @@ Run
 
 Commands:
 
+  * `defaults`   - print built-in default options
   * `list`   - list all channels defined in the config file
   * `repl`   - replicate the given channels from scratch
   * `dump`   - only create dump for the given channels
