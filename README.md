@@ -29,13 +29,14 @@ Run
 
 Commands:
 
-  * `defaults`   - print built-in default options
-  * `list`   - list all channels defined in the config file
-  * `repl`   - replicate the given channels from scratch
-  * `dump`   - only create dump for the given channels
-  * `clean`  - remove dumps and temporary files for the given channels
-  * `stop`   - pause replication for the given channels
-  * `start`  - continue replication for the given channels
+  * `defaults` - print built-in default options
+  * `list`     - list all channels defined in the config file
+  * `repl`     - replicate the given channels from scratch
+  * `dump`     - only create dump for the given channels
+  * `clean`    - remove dumps and temporary files for the given channels
+  * `stop`     - pause replication for the given channels
+  * `start`    - continue replication for the given channels
+  * `restart`  - stop, then start
 
 The following command will create an SQL dump for channel `foo` defined in
 `channels.ini`, import it, set up master options and start replication:
