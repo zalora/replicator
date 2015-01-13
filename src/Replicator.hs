@@ -31,6 +31,7 @@ Commands:
   stop    - pause replication for the given channels
   start   - continue replication for the given channels
   restart - stop, then start
+  kick    - stop, skip one statement, then start
 
 Options:|]
 
@@ -55,6 +56,7 @@ main = $initHFlags usage >> do
         "clean"    -> Cmd.clean conf secs
         "stop"     -> Cmd.stopSlave conf secs
         "start"    -> Cmd.startSlave conf secs
+        "kick"     -> Cmd.kickSlave conf secs
         "restart"  -> Cmd.restartSlave conf secs
         _          -> error $ "Unknown command: " ++ cmd
 

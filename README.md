@@ -37,6 +37,7 @@ Commands:
   * `stop`     - pause replication for the given channels
   * `start`    - continue replication for the given channels
   * `restart`  - stop, then start
+  * `kick`     - stop, skip one statement, then start the given channels
 
 The following command will create an SQL dump for channel `foo` defined in
 `channels.ini`, import it, set up master options and start replication:

@@ -48,11 +48,13 @@ These options are mandatory and use by Replicator to perform its tasks.
   * `sql-stop-slave`— SQL statement for stopping replication of a channel.
   * `sql-start-slave`— SQL statement for starting/resuming replicatiion of a channel.
   * `sql-change-master`— SQL statement for changing master options of a channel.
+  * `sql-set-slave-skip-counter`— `SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1;` per channel.
 
 You should not specify `cmd-mysqldump`, `cmd-mysql`. These options are built out of
 [mysqldump options](#mysqldump-options) and [mysql options](#mysql-options).
 The same is valid for `sql-change-master` which is composed of [master options](#master-options).
-The values `sql-stop-slave`,`sql-start-slave` and `sql-change-master` depends on the value of `multi-source`.
+The values `sql-stop-slave`,`sql-start-slave`,  `sql-change-master` and `sql-set-slave-skip-counter`
+depend on the value of `multi-source`.
 Of course you *can* specify these options explicitly for incredible flexibility.
 
   * `multi-source`— defines syntax of replication commands.

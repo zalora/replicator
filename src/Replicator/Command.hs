@@ -4,6 +4,7 @@
 module Replicator.Command (
     clean,
     createDump,
+    kickSlave,
     replicate,
     restartSlave,
     startSlave,
@@ -74,6 +75,9 @@ taskStartSlave = runSql "sql-start-slave"
 
 taskChangeMaster :: Task
 taskChangeMaster = runSql "sql-change-master"
+
+taskSetSlaveSkipCounter :: Task
+taskSetSlaveSkipCounter = runSql "sql-set-slave-skip-counter"
 
 -- TODO: get rid of IORef
 taskGetMasterLog :: Task
@@ -181,4 +185,10 @@ restartSlave = run [ taskStopSlave, taskStartSlave ]
 
 createDump :: Command
 createDump = run [ taskCreateDump ]
+
+kickSlave :: Command
+kickSlave = run [ taskStopSlave
+                , taskSetSlaveSkipCounter
+                , taskStartSlave
+                ]
 

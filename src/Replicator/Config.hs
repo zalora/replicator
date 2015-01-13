@@ -56,6 +56,7 @@ addOptions conf = foldl buildOption conf opts where
            , ("sql-change-master", makeSqlChangeMaster)
            , ("sql-stop-slave", makeSqlSlave "STOP SLAVE")
            , ("sql-start-slave", makeSqlSlave "START SLAVE")
+           , ("sql-set-slave-skip-counter", makeSetSlaveSkipCounter)
            ]
 
 makeSqlChangeMaster :: Cf.ConfigParser -> Cf.SectionSpec -> String
@@ -77,13 +78,22 @@ makeSqlChangeMaster conf sec = "CHANGE MASTER" ++ channelSQL conf sec ++
 makeSqlSlave :: String -> Cf.ConfigParser -> Cf.SectionSpec -> String
 makeSqlSlave cmd conf sec = cmd ++ channelSQL conf sec ++ ";"
 
+multiSource :: String -> String
+multiSource a = map toLower $ take 5 $ filter isAlpha a
+
 channelSQL :: Cf.ConfigParser -> Cf.SectionSpec -> String
 channelSQL conf sec = case multi of
     "maria" -> " '" ++ channel ++ "'"
     "mysql" -> " FOR CHANNEL '" ++ channel ++ "'"
     _       -> ""
-    where multi = map toLower $ take 5 $ filter isAlpha $ get conf sec "multi-source"
+    where multi = multiSource $ get conf sec "multi-source"
           channel = get conf sec "channel"
+
+makeSetSlaveSkipCounter :: Cf.ConfigParser -> Cf.SectionSpec -> String
+makeSetSlaveSkipCounter conf sec = case multi of
+    "maria" -> "SET @@default_master_connection='%(channel)s'; SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1;"
+    _       -> "SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1;" -- FIXME: MySQL?
+    where multi = multiSource $ get conf sec "multi-source"
 
 makeCommand :: String -> Cf.ConfigParser -> Cf.SectionSpec -> String
 makeCommand cmd conf sec = unwords $ cmd':args where
