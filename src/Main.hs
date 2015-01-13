@@ -48,8 +48,8 @@ main = $initHFlags usage >> do
     when (null arguments) $ error "No command specified"
     when (not $ null missing) $ error $ "No such channels: " ++ unwords missing
     case cmd of
-        "defaults" -> putStr $ defaults
-        "default"  -> putStr $ defaults
+        "defaults" -> putStr defaults
+        "default"  -> putStr defaults
         "list"     -> putStrLn $ unwords all_channels
         "repl"     -> Cmd.replicate conf secs
         "dump"     -> Cmd.createDump conf secs
