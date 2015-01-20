@@ -45,7 +45,7 @@ buildOption :: Cf.ConfigParser
             -> (Cf.OptionSpec,  Cf.ConfigParser -> Cf.SectionSpec -> String)
             -> Cf.ConfigParser
 buildOption conf (opt, builder) = foldl go conf (Cf.sections conf) where
-    go cf s = if Cf.has_option cf s opt then cf
+    go cf s = if Cf.has_option cf s opt && ("auto" /= get cf s opt) then cf
               else set cf s opt (builder cf s)
 
 addOptions :: Cf.ConfigParser -> Cf.ConfigParser
