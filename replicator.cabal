@@ -42,7 +42,7 @@ executable replicator
         hflags,
         lens-family-core >=1.1.0,
         monad-parallel,
-        mtl >= 2.2.1,
+        mtl,
         pipes,
         pipes-bytestring,
         pipes-group >=1.0.1,
