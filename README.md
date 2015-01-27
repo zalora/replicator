@@ -38,6 +38,7 @@ Commands:
   * `start`    - continue replication for the given channels
   * `restart`  - stop, then start
   * `kick`     - stop, skip one statement, then start the given channels
+  * `reset`    - stop, then reset the channels (like `RESET SLAVE ALL`)
 
 The following command will create an SQL dump for channel `foo` defined in
 `channels.ini`, import it, set up master options and start replication:

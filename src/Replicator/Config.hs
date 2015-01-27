@@ -51,12 +51,13 @@ buildOption conf (opt, builder) = foldl go conf (Cf.sections conf) where
 addOptions :: Cf.ConfigParser -> Cf.ConfigParser
 addOptions conf = foldl buildOption conf opts where
     opts = [ ("channel", \_ s -> s)
-           , ("cmd-mysqldump", makeCommand "mysqldump")
            , ("cmd-mysql", makeCommand "mysql")
+           , ("cmd-mysqldump", makeCommand "mysqldump")
            , ("sql-change-master", makeSqlChangeMaster)
-           , ("sql-stop-slave", makeSqlSlave "STOP SLAVE")
-           , ("sql-start-slave", makeSqlSlave "START SLAVE")
+           , ("sql-reset-slave", makeSqlResetSlave)
            , ("sql-set-slave-skip-counter", makeSetSlaveSkipCounter)
+           , ("sql-start-slave", makeSqlSlave "START SLAVE")
+           , ("sql-stop-slave", makeSqlSlave "STOP SLAVE")
            ]
 
 makeSqlChangeMaster :: Cf.ConfigParser -> Cf.SectionSpec -> String
@@ -75,25 +76,31 @@ makeSqlChangeMaster conf sec = "CHANGE MASTER" ++ channelSQL conf sec ++
                     "MASTER_SSL" -> value
                     _ -> "'" ++ value ++ "'"
 
+multiSource :: Cf.ConfigParser -> Cf.SectionSpec -> String
+multiSource conf sec = map toLower $ take 5 $ filter isAlpha (get conf sec "multi-source")
+
 makeSqlSlave :: String -> Cf.ConfigParser -> Cf.SectionSpec -> String
 makeSqlSlave cmd conf sec = cmd ++ channelSQL conf sec ++ ";"
 
-multiSource :: String -> String
-multiSource a = map toLower $ take 5 $ filter isAlpha a
-
 channelSQL :: Cf.ConfigParser -> Cf.SectionSpec -> String
-channelSQL conf sec = case multi of
+channelSQL conf sec = case multiSource conf sec of
     "maria" -> " '" ++ channel ++ "'"
     "mysql" -> " FOR CHANNEL '" ++ channel ++ "'"
     _       -> ""
-    where multi = multiSource $ get conf sec "multi-source"
-          channel = get conf sec "channel"
+    where channel = get conf sec "channel"
+
+-- XXX: MySQL >= 5.5
+makeSqlResetSlave :: Cf.ConfigParser -> Cf.SectionSpec -> String
+makeSqlResetSlave conf sec = case multiSource conf sec of
+    "maria" -> "RESET SLAVE '" ++ channel ++ "' ALL;"
+    "mysql" -> "RESET SLAVE ALL FOR CHANNEL '" ++ channel ++ "';"
+    _       -> "RESET SLAVE ALL;"
+    where channel = get conf sec "channel"
 
 makeSetSlaveSkipCounter :: Cf.ConfigParser -> Cf.SectionSpec -> String
-makeSetSlaveSkipCounter conf sec = case multi of
+makeSetSlaveSkipCounter conf sec = case multiSource conf sec of
     "maria" -> "SET @@default_master_connection='%(channel)s'; SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1;"
     _       -> "SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1;" -- FIXME: MySQL?
-    where multi = multiSource $ get conf sec "multi-source"
 
 makeCommand :: String -> Cf.ConfigParser -> Cf.SectionSpec -> String
 makeCommand cmd conf sec = unwords $ cmd':args where

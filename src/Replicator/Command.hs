@@ -6,6 +6,7 @@ module Replicator.Command (
     createDump,
     kickSlave,
     replicate,
+    resetSlave,
     restartSlave,
     startSlave,
     stopSlave
@@ -72,6 +73,9 @@ taskStopSlave = runSql "sql-stop-slave"
 
 taskStartSlave :: Task
 taskStartSlave = runSql "sql-start-slave"
+
+taskResetSlave :: Task
+taskResetSlave = runSql "sql-reset-slave"
 
 taskChangeMaster :: Task
 taskChangeMaster = runSql "sql-change-master"
@@ -182,6 +186,9 @@ startSlave = run [ taskStartSlave ]
 
 restartSlave :: Command
 restartSlave = run [ taskStopSlave, taskStartSlave ]
+
+resetSlave :: Command
+resetSlave = run [ taskStopSlave, taskResetSlave ]
 
 createDump :: Command
 createDump = run [ taskCreateDump ]

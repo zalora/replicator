@@ -49,6 +49,7 @@ These options are mandatory and use by Replicator to perform its tasks.
   * `sql-start-slave`— SQL statement for starting/resuming replicatiion of a channel.
   * `sql-change-master`— SQL statement for changing master options of a channel.
   * `sql-set-slave-skip-counter`— `SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1;` per channel.
+  * `sql-reset-slave`— `RESET SLAVE ALL;` per channel.
 
 You should not specify `cmd-mysqldump`, `cmd-mysql`. These options are built out of
 [mysqldump options](#mysqldump-options) and [mysql options](#mysql-options).
