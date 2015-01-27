@@ -140,6 +140,7 @@ mysqldump = mysqldump
 mysqldump-comments = 0
 mysqldump-compress = 1
 mysqldump-default-character-set = utf8
+mysqldump-extended-insert = 1
 mysqldump-host = %(master-host)s
 mysqldump-master-data = 2
 mysqldump-single-transaction = 1
