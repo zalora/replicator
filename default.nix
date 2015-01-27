@@ -8,7 +8,7 @@
 
 cabal.mkDerivation (self: {
   pname = "replicator";
-  version = "0.4.0";
+  version = "git";
   src = ./.;
   isLibrary = false;
   isExecutable = true;
