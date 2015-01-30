@@ -14,6 +14,7 @@ module Replicator.Command (
 
 import Prelude hiding (replicate)
 
+import Control.Applicative ((<$>))
 import Control.Monad (when, forever)
 import Control.Monad.Error (runErrorT)
 import Control.Monad.IO.Class (liftIO, MonadIO)
@@ -23,11 +24,12 @@ import Pipes.Safe (MonadSafe)
 import Pipes.Shell ((>?>), runShell, producerCmd, pipeCmd, ignoreOut)
 import Replicator.Compress (compress, decompress)
 import Replicator.Config (get)
-import Replicator.Flags (flags_force, flags_timeline, flags_parallel)
+import Replicator.Flags (flags_force, flags_timeline, flags_parallel, flags_progress)
 import Replicator.Regex (masterLog, MasterLog(..), (=~))
 import Replicator.Timeline (timestamp, seconds)
 import System.Directory (doesFileExist, removeFile)
 import System.IO (stderr, withFile, IOMode(WriteMode, ReadMode))
+import System.Posix.Files (getFileStatus, fileSize)
 import qualified Control.Monad.Parallel as Parallel
 import qualified Data.ByteString.Char8 as BSC
 import qualified Data.ConfigFile as Cf
@@ -41,12 +43,17 @@ data Context = Context {
  ,  zero :: Integer
 }
 
-type Task = Context -> IO Context
 type Command = Cf.ConfigParser -> [Cf.SectionSpec] -> IO ()
+type PipeProgressState = Maybe (Integer, Integer) -- (percent, seconds)
+type PipeProgressReport = PipeProgressState -> Integer -> IO PipeProgressState
+type Task = Context -> IO Context
 
 
 quack :: Integer -> String -> IO()
 quack z m = if flags_timeline then timestamp z m else putStrLn m
+
+getFileSize :: String -> IO Integer
+getFileSize path = (toInteger . fileSize) <$> getFileStatus path
 
 runSql :: String -> Task
 runSql cmd Context{..} = if null sql then return Context{..} else do
@@ -65,6 +72,23 @@ printError = forever $ await >>= \case
 
 producerCmd'' :: MonadSafe m => String -> Producer BSC.ByteString m ()
 producerCmd'' cmd = producerCmd cmd >-> printError
+
+pipeProgress :: MonadIO m
+             => PipeProgressReport
+             -> Producer BSC.ByteString m ()
+             -> Producer BSC.ByteString m ()
+pipeProgress report producer = if not flags_progress
+    then producer
+    else producer >?> progress Nothing 0 where
+    progress :: MonadIO m => PipeProgressState -> Integer
+              -> Pipe (Maybe BSC.ByteString) BSC.ByteString m ()
+    progress state c = await >>= \case
+                    Nothing -> return ()
+                    Just b  -> do
+                        let c' = c + (toInteger $ BSC.length b)
+                        state' <- liftIO $ report state c'
+                        yield b
+                        progress state' c'
 
 
 
@@ -128,18 +152,38 @@ taskCreateDump Context{..} = do
 
 taskImportDump :: Task
 taskImportDump Context{..} = do
-    quack zero $ "Importing " ++ show dump
+    quack zero msg
     withFile dump ReadMode ( \h -> runShell $
         sql h >?> pipeCmd mysql >-> ignoreOut >-> PBS.toHandle stderr )
     return Context{..}
     where
+        msg = "Importing " ++ show dump
         begin = get conf sec "sql-begin-import"
         end = get conf sec "sql-end-import"
         dump = get conf sec "dump"
         mysql = get conf sec "cmd-mysql"
+        report :: Integer -> PipeProgressReport
+        report a st c = do
+            t' <- seconds
+            let p' = toInteger (100 * c) `div` a
+                progress = case st of
+                    Nothing -> if p' > 0 then Just (p', t') else Nothing
+                    Just (p, t) -> if (p' > p) && (t' - t > 30 || p' == 100) && (
+                                (t' - t > 300) ||
+                                ((p' `mod` 10 == 0)) ||
+                                (p' - 0) < 5 ||
+                                (100 - p') < 5
+                              ) then Just (p', t')
+                                else Nothing
+            case progress of
+                Nothing -> return st
+                Just (p'', t'') -> do
+                    quack zero (msg ++ " ... " ++ show p'' ++"%")
+                    return (Just (p'', t''))
         sql h = do
+            amount <- liftIO $ getFileSize dump
             yield (BSC.pack $ begin ++ "\n")
-            decompress dump $ PBS.fromHandle h
+            decompress dump $ pipeProgress (report amount) (PBS.fromHandle h)
             yield (BSC.pack $ end ++ "\n")
 
 
