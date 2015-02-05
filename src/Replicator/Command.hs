@@ -30,6 +30,7 @@ import Replicator.Timeline (timestamp, seconds)
 import System.Directory (doesFileExist, removeFile)
 import System.IO (stderr, withFile, IOMode(WriteMode, ReadMode))
 import System.Posix.Files (getFileStatus, fileSize)
+import Text.Printf (printf)
 import qualified Control.Monad.Parallel as Parallel
 import qualified Data.ByteString.Char8 as BSC
 import qualified Data.ConfigFile as Cf
@@ -48,6 +49,16 @@ type PipeProgressState = Maybe (Integer, Integer) -- (percent, seconds)
 type PipeProgressReport = PipeProgressState -> Integer -> IO PipeProgressState
 type Task = Context -> IO Context
 
+humanSize :: Integer -> String
+humanSize b
+    | b < 1024 = show b ++ " B"
+    | k < 1024 = show k ++ " KiB"
+    | m < 1024 = show m ++ " MiB"
+    | otherwise = printf "%.1f" g ++ " GiB"
+    where k = b `div` 1024
+          m = k `div` 1024
+          g :: Double
+          g = fromIntegral m / 1024
 
 quack :: Integer -> String -> IO()
 quack z m = if flags_timeline then timestamp z m else putStrLn m
@@ -141,14 +152,32 @@ taskCreateDump :: Task
 taskCreateDump Context{..} = do
     exists <- doesFileExist dump
     when (not exists || flags_force) $ do
-        quack zero $ "Creating " ++ show dump
+        quack zero msg
         withFile dump WriteMode ( \h -> runShell $
-            for (compress dump $ producerCmd'' mysqldump)
+            for (pipeProgress report $ compress dump $ producerCmd'' mysqldump)
                 (liftIO . BSC.hPutStr h) )
+        amount <- liftIO $ getFileSize dump
+        quack zero (msg ++ " ... " ++ humanSize amount)
     return Context{..}
     where
+        msg = "Creating " ++ show dump
         dump = get conf sec "dump"
         mysqldump = get conf sec "cmd-mysqldump"
+        report :: PipeProgressReport
+        report st s' = do
+            t' <- seconds
+            let progress = case st of
+                    Nothing -> if s' > 0 then Just (s', t') else Nothing
+                    Just (s, t) -> if (s' > s) && (t' - t > 30) && (
+                                (t' - t > 300) ||
+                                10 * (s' - s) > s
+                              ) then Just (s', t')
+                                else Nothing
+            case progress of
+                Nothing -> return st
+                Just (s'', t'') -> do
+                    quack zero (msg ++ " ... " ++ humanSize s'')
+                    return (Just (s'', t''))
 
 taskImportDump :: Task
 taskImportDump Context{..} = do
