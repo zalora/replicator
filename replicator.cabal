@@ -37,6 +37,7 @@ executable replicator
     build-depends:
         base >=4.6 && <5,
         ConfigFile,
+        Glob,
         MissingH,
         bytestring,
         containers,

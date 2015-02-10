@@ -10,9 +10,10 @@ module Replicator.Config (
 import Control.Applicative ((<$>))
 import Data.Char (toUpper, toLower, isAlpha)
 import Data.Either.Utils (forceEither)
-import Data.List (union, isPrefixOf, stripPrefix, partition, intercalate)
+import Data.List ((\\), union, isPrefixOf, stripPrefix, partition, intercalate)
 import Data.Maybe (fromJust)
 import Data.String.Utils (startswith)
+import System.FilePath.Glob (compile, match)
 import Text.RawString.QQ (r)
 import qualified Data.ConfigFile as Cf
 
@@ -27,19 +28,41 @@ openConfig f = (addOptions . forceEither) <$> Cf.readfile defaultCP f
 set :: Cf.ConfigParser -> Cf.SectionSpec -> Cf.OptionSpec -> String -> Cf.ConfigParser
 set conf sec opt val = forceEither $ Cf.set conf sec opt val
 
+filterAndStrip :: String -> [Cf.OptionSpec] -> [Cf.OptionSpec]
+filterAndStrip prefix opts = map (fromJust . stripPrefix prefix)
+                                (filter (isPrefixOf prefix) opts)
+
+filterOutGlob :: [String] -> [Cf.OptionSpec] -> [Cf.OptionSpec]
+filterOutGlob globs [] = []
+filterOutGlob [] opts = opts
+filterOutGlob (g:gs) opts = filterOutGlob gs opts'
+    where opts' = filter (not . match pattern) opts
+          pattern = compile g
+
+removeDefaults :: Cf.ConfigParser -> Cf.SectionSpec -> Cf.ConfigParser
+removeDefaults conf sec = conf' where
+    conf' = remove conf opts
+    remove cf [] = cf
+    remove cf (x:xs) = remove cf' xs where cf' = forceEither $ Cf.remove_option cf "DEFAULT" x
+    defaults = forceEither (Cf.options conf "DEFAULT")
+    globs = filterAndStrip "-" $ forceEither (Cf.options conf sec)
+    opts = defaults \\ filterOutGlob globs defaults
+
 getOptions :: String -> Cf.ConfigParser -> Cf.SectionSpec -> [String]
-getOptions prefix conf sec = map (fromJust . stripPrefix prefix')
-                                (filter (isPrefixOf prefix') (options conf sec))
-                        where prefix' = prefix ++ "-"
+getOptions prefix conf sec = filterAndStrip (prefix ++ "-") (options conf' sec)
+        where conf' = removeDefaults conf sec
 
 getOption :: String -> Cf.ConfigParser -> Cf.SectionSpec -> Cf.OptionSpec -> String
 getOption prefix conf sec opt = if v == "auto" then "%(" ++ opt' ++ ")s" else v
-    where v = forceEither $ Cf.simpleAccess conf sec opt'
+    where v = forceEither $ Cf.simpleAccess conf' sec opt'
           opt' = prefix ++ "-" ++ opt
+          conf' = removeDefaults conf sec
 
 options :: Cf.ConfigParser -> Cf.SectionSpec -> [Cf.OptionSpec]
-options conf sec = forceEither (Cf.options conf sec)
-                    `union` forceEither (Cf.options conf "DEFAULT")
+options conf sec = section_options `union` default_options
+    where section_options = forceEither (Cf.options conf sec)
+          default_options = forceEither (Cf.options conf' "DEFAULT")
+          conf' = removeDefaults conf sec
 
 buildOption :: Cf.ConfigParser
             -> (Cf.OptionSpec,  Cf.ConfigParser -> Cf.SectionSpec -> String)

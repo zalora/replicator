@@ -12,10 +12,27 @@ This can be changed with the `--config` command line option, for example:
 
 The name of section in the configuration file is the name of replication channel.
 Each replication channel is a connection from slave to master to get the binary log events. 
+
 Section `[DEFAULT]` is special: all options from this section implicitly apply to
 all other sections, but can be explicitly overriden. Replicator also
 provides built-in default options, see [src/Replicator/Config.hs](src/Replicator/Config.hs).
 Built-in default options are overriden by the `[DEFAULT]` section and by the channel sections.
+
+Any default option can be "removed" from the channel section with a glob pattern, e. g.:
+
+    [DEFAULT]
+    master-ssl = 1
+    master-ssl-ca = /etc/ca.pem
+
+    [foo]
+    ...
+
+    [bar]
+    ...
+    -master-ssl-*
+
+In the above example channel "foo" inherits options "master-ssl" and "master-ssl-ca", while "bar"
+inherits only "master-ssl".
 
 Each option may refer to other options from the same section
 (and indirectly from `[DEFAULT]` and built-in options). Each section
