@@ -151,14 +151,19 @@ taskGetMasterLog Context{..} = if log_file /= "auto" && log_pos /= "auto"
 taskCreateDump :: Task
 taskCreateDump Context{..} = do
     exists <- doesFileExist dump
-    when (not exists || flags_force) $ do
+    if (exists && not flags_force)
+    then do
+        size <- getFileSize dump
+        quack zero $ "Using existing " ++ show dump ++ " " ++ humanSize size
+        return Context{..}
+    else do
         quack zero msg
         withFile dump WriteMode ( \h -> runShell $
             for (pipeProgress report $ compress dump $ producerCmd'' mysqldump)
                 (liftIO . BSC.hPutStr h) )
         amount <- liftIO $ getFileSize dump
         quack zero (msg ++ " ... " ++ humanSize amount)
-    return Context{..}
+        return Context{..}
     where
         msg = "Creating " ++ show dump
         dump = get conf sec "dump"
