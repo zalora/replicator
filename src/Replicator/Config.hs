@@ -33,7 +33,7 @@ filterAndStrip prefix opts = map (fromJust . stripPrefix prefix)
                                 (filter (isPrefixOf prefix) opts)
 
 filterOutGlob :: [String] -> [Cf.OptionSpec] -> [Cf.OptionSpec]
-filterOutGlob globs [] = []
+filterOutGlob _ [] = []
 filterOutGlob [] opts = opts
 filterOutGlob (g:gs) opts = filterOutGlob gs opts'
     where opts' = filter (not . match pattern) opts
@@ -44,9 +44,9 @@ removeDefaults conf sec = conf' where
     conf' = remove conf opts
     remove cf [] = cf
     remove cf (x:xs) = remove cf' xs where cf' = forceEither $ Cf.remove_option cf "DEFAULT" x
-    defaults = forceEither (Cf.options conf "DEFAULT")
+    defs = forceEither (Cf.options conf "DEFAULT")
     globs = filterAndStrip "-" $ forceEither (Cf.options conf sec)
-    opts = defaults \\ filterOutGlob globs defaults
+    opts = defs \\ filterOutGlob globs defs
 
 getOptions :: String -> Cf.ConfigParser -> Cf.SectionSpec -> [String]
 getOptions prefix conf sec = filterAndStrip (prefix ++ "-") (options conf' sec)
