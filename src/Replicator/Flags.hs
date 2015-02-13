@@ -3,7 +3,7 @@ module Replicator.Flags where
 
 import HFlags (defineFlag)
 
-defineFlag "f:force" False "Force action, e. g. overwrite dumps"
+defineFlag "f:force" False "Force tasks in complex commands, e. g. overwrite dumps"
 defineFlag "t:timeline" True "Show timestamps for each task"
 defineFlag "parallel" False "*Experimental* Run command in parallel for each channel"
 defineFlag "progress" True "Show progress for some operations"

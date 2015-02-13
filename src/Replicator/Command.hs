@@ -39,9 +39,10 @@ import qualified Pipes.ByteString as PBS
 import qualified Pipes.Group as PG
 
 data Context = Context {
-    conf :: Cf.ConfigParser
- ,  sec  :: Cf.SectionSpec
- ,  zero :: Integer
+    conf    :: Cf.ConfigParser
+ ,  sec     :: Cf.SectionSpec
+ ,  zero    :: Integer
+ ,  complex :: Bool
 }
 
 type Command = Cf.ConfigParser -> [Cf.SectionSpec] -> IO ()
@@ -151,7 +152,7 @@ taskGetMasterLog Context{..} = if log_file /= "auto" && log_pos /= "auto"
 taskCreateDump :: Task
 taskCreateDump Context{..} = do
     exists <- doesFileExist dump
-    if (exists && not flags_force)
+    if (complex && exists && not flags_force)
     then do
         size <- getFileSize dump
         quack zero $ "Using existing " ++ show dump ++ " " ++ humanSize size
@@ -238,6 +239,7 @@ run tasks conf sections = do
     _ <- map' (\s -> run' Context{sec = s, ..} tasks) sections
     when (flags_timeline) $ quack zero "Done."
     where
+        complex = length tasks > 1
         map' = if flags_parallel then Parallel.mapM else mapM
         run' _ [] = return ()
         run' ctx (t:tt) = do
