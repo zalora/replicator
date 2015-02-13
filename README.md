@@ -22,23 +22,26 @@ Configuration
 =============
 See the [examples](EXAMPLES.md) and [configuration details](CONFIGURATION.md).
 
-Run
-===
+Usage
+=====
 
     replicator [options] {command} [channel ...]
 
-Commands:
+Primitive commands:
 
-  * `defaults` - print built-in default options
-  * `list`     - list all channels defined in the config file
-  * `repl`     - replicate the given channels from scratch
-  * `dump`     - only create dump for the given channels
   * `clean`    - remove dumps and temporary files for the given channels
-  * `stop`     - pause replication for the given channels
+  * `defaults` - print built-in default options
+  * `dump`     - create dumps for the given channels
+  * `list`     - list all channels defined in the config file
   * `start`    - continue replication for the given channels
-  * `restart`  - stop, then start
-  * `kick`     - stop, skip one statement, then start the given channels
-  * `reset`    - stop, then reset the channels (like `RESET SLAVE ALL`)
+  * `stop`     - pause replication for the given channels
+
+Complex commands:
+
+  * `kick`    - stop, skip one statement, then start
+  * `repl`    - replicate the given channels from scratch
+  * `reset`   - stop, then reset slave
+  * `restart` - stop, then start
 
 The following command will create an SQL dump for channel `foo` defined in
 `channels.ini`, import it, set up master options and start replication:
