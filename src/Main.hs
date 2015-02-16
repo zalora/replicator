@@ -30,8 +30,9 @@ Primitive commands:
 
 Complex commands:
 
-  kick    - stop, skip one statement, then start
   repl    - replicate the given channels from scratch
+  pipe    - same as repl but without intermediate dump file
+  kick    - stop, skip one statement, then start
   reset   - stop, then reset slave
   restart - stop, then start
 
@@ -54,6 +55,7 @@ main = $initHFlags usage >> do
         "default"  -> putStr defaults
         "list"     -> putStrLn $ unwords all_channels
         "repl"     -> Cmd.replicate conf secs
+        "pipe"     -> Cmd.pipe conf secs
         "dump"     -> Cmd.createDump conf secs
         "clean"    -> Cmd.clean conf secs
         "stop"     -> Cmd.stopSlave conf secs

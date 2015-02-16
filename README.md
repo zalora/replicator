@@ -38,8 +38,9 @@ Primitive commands:
 
 Complex commands:
 
-  * `kick`    - stop, skip one statement, then start
   * `repl`    - replicate the given channels from scratch
+  * `pipe`    - same as `repl` but without intermediate dump file
+  * `kick`    - stop, skip one statement, then start
   * `reset`   - stop, then reset slave
   * `restart` - stop, then start
 
