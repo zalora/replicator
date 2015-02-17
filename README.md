@@ -20,7 +20,7 @@ Installation
 
 Configuration
 =============
-See the [examples](EXAMPLES.md) and [configuration details](CONFIGURATION.md).
+See the [examples](examples/) and [configuration details](CONFIGURATION.md).
 
 Usage
 =====
