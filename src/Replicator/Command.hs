@@ -29,7 +29,7 @@ import Replicator.Flags (flags_force, flags_timeline, flags_parallel, flags_prog
 import Replicator.Regex (masterLog, MasterLog(..), (=~))
 import Replicator.Timeline (timestamp, seconds)
 import System.Directory (doesFileExist, removeFile)
-import System.IO (stderr, withFile, IOMode(WriteMode, ReadMode))
+import System.IO (hPutStrLn, stderr, withFile, IOMode(WriteMode, ReadMode))
 import System.Posix.Files (getFileStatus, fileSize)
 import Text.Printf (printf)
 import qualified Control.Monad.Parallel as Parallel
@@ -63,7 +63,9 @@ humanSize b
           g = fromIntegral m / 1024
 
 quack :: Integer -> String -> IO()
-quack z m = if flags_timeline then timestamp z m else putStrLn m
+quack z m = do
+              m' <- if flags_timeline then timestamp z m else return m
+              hPutStrLn stderr m'
 
 getFileSize :: String -> IO Integer
 getFileSize path = (toInteger . fileSize) <$> getFileStatus path
