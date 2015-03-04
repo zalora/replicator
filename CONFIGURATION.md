@@ -50,7 +50,7 @@ See samples under the [examples](EXAMPLES.md) directory.
 Top-level options
 -----------------
 
-These options are mandatory and use by Replicator to perform its tasks.
+These options are mandatory and used by Replicator to perform its tasks.
 
   * `dump`— a file for a database dump. Note that if it ends with `.gz` the dump will be compressed with gzip
      on creating and decompressed on importing. Gzip is not required, zlib library is used.
