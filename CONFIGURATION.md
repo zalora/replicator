@@ -36,7 +36,7 @@ inherits only "master-ssl".
 
 Each option may refer to other options from the same section
 (and indirectly from `[DEFAULT]` and built-in options). Each section
-has an implicitly option `channel` that holds the section name, for example:
+has an implicit option `channel` that holds the section name, for example:
 
     [foo]
     dump = %(dump-dir)s/replicator-%(channel)s.mysql.gz
