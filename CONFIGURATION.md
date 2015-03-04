@@ -58,9 +58,9 @@ These options are mandatory and used by Replicator to perform its tasks.
   * `cmd-mysqldump`— full command for creating a dump from a master.
   * `cmd-mysql`— full command for executing SQL at a slave. This includes staring and stopping replication,
     importing dump, etc.
-  * `sql-begin-import`— SQL statement executed *right before* the dump import starts.
+  * `sql-begin-import`— SQL statement to be executed *right before* the dump import starts.
      Built-in default is `"SET AUTOCOMMIT=0;"`.
-  * `sql-end-import`— SQL statement executed *right after* the dump import ends.
+  * `sql-end-import`— SQL statement to be executed *right after* the dump import ends.
     Built-in default is `"COMMIT;"`.
   * `sql-stop-slave`— SQL statement for stopping replication of a channel.
   * `sql-start-slave`— SQL statement for starting/resuming replicatiion of a channel.
@@ -71,7 +71,7 @@ These options are mandatory and used by Replicator to perform its tasks.
 You should not specify `cmd-mysqldump`, `cmd-mysql`. These options are built out of
 [mysqldump options](#mysqldump-options) and [mysql options](#mysql-options).
 The same is valid for `sql-change-master` which is composed of [master options](#master-options).
-The values `sql-stop-slave`,`sql-start-slave`,  `sql-change-master` and `sql-set-slave-skip-counter`
+The values of `sql-stop-slave`,`sql-start-slave`,  `sql-change-master` and `sql-set-slave-skip-counter`
 depend on the value of `multi-source`.
 Of course you *can* specify these options explicitly for incredible flexibility.
 
