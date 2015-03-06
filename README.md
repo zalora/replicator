@@ -1,9 +1,15 @@
 About
 =====
-This is a utility to automate DB replication for
+This is a utility to automate DB replication setup for
 MySQL database family. It is primarily aimed for multi-source
 replication (MariaDB >= 10.0.1 and MySQL >= 5.7),
 but can be used for a single-source replication.
+
+Replicator is neither a database server configurator,
+nor a replication tool. In a nutshell, Replicator
+creates dumps with `mysqldump`, imports dumps into
+slaves, and sets master options at slaves. Replication
+is performed by MariaDB/MySQL servers.
 
 Requirements
 ============
