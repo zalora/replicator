@@ -56,7 +56,7 @@ These options are mandatory and used by Replicator to perform its tasks.
      on creating and decompressed on importing. Gzip is not required, zlib library is used.
      Default is `"%(dump-dir)s/replicator-%(channel)s.mysql.gz"`, And `dump-dir` is `"."` (current directory).
   * `cmd-mysqldump`— full command for creating a dump from a master.
-  * `cmd-mysql`— full command for executing SQL at a slave. This includes staring and stopping replication,
+  * `cmd-mysql`— full command for executing SQL at a slave. This includes starting and stopping replication,
     importing dump, etc.
   * `sql-begin-import`— SQL statement to be executed *right before* the dump import starts.
      Built-in default is `"SET AUTOCOMMIT=0;"`.
