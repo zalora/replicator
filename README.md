@@ -14,7 +14,7 @@ is performed by MariaDB/MySQL servers.
 Requirements
 ============
 Replicator is written in Haskell with [GHC](http://www.haskell.org/ghc/).
-All requried Haskell libraries are listed in [replicator.cabal](replicator.cabal).
+All required Haskell libraries are listed in [replicator.cabal](replicator.cabal).
 Use [cabal-install](http://www.haskell.org/haskellwiki/Cabal-Install)
 to fetch and build all pre-requisites automatically.
 
