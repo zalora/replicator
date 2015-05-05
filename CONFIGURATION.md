@@ -126,6 +126,7 @@ The latter is prefered for readability.
 These are built-in default options for `mysqldump`:
 
     mysqldump = mysqldump
+    mysqldump-add-drop-database = 1
     mysqldump-comments = 0
     mysqldump-compress = 1
     mysqldump-default-character-set = utf8
