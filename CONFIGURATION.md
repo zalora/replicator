@@ -56,8 +56,8 @@ These options are mandatory and used by Replicator to perform its tasks.
      on creating and decompressed on importing. Gzip is not required, zlib library is used.
      Default is `"%(dump-dir)s/replicator-%(channel)s.mysql.gz"`, And `dump-dir` is `"."` (current directory).
   * `cmd-mysqldump`— full command for creating a dump from a master.
-  * `cmd-mysql`— full command for executing SQL at a slave. This includes starting and stopping replication,
-    importing dump, etc.
+  * `cmd-mysql`— full command for executing SQL on a slave. This includes starting and stopping replication,
+    importing the dump, etc.
   * `sql-begin-import`— SQL statement to be executed *right before* the dump import starts.
      Built-in default is `"SET AUTOCOMMIT=0;"`.
   * `sql-end-import`— SQL statement to be executed *right after* the dump import ends.
@@ -67,14 +67,6 @@ These options are mandatory and used by Replicator to perform its tasks.
   * `sql-change-master`— SQL statement for changing master options of a channel.
   * `sql-set-slave-skip-counter`— `SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1;` per channel.
   * `sql-reset-slave`— `RESET SLAVE ALL;` per channel.
-
-You should not specify `cmd-mysqldump`, `cmd-mysql`. These options are built out of
-[mysqldump options](#mysqldump-options) and [mysql options](#mysql-options).
-The same is valid for `sql-change-master` which is composed of [master options](#master-options).
-The values of `sql-stop-slave`,`sql-start-slave`,  `sql-change-master` and `sql-set-slave-skip-counter`
-depend on the value of `multi-source`.
-Of course you *can* specify these options explicitly for incredible flexibility.
-
   * `multi-source`— defines syntax of replication commands.
     Possible values: *no*, *mysql*, *mariadb* (in any case: mySQL, MariaDB, etc.).
     Default is *no*. For example:
@@ -84,6 +76,22 @@ Of course you *can* specify these options explicitly for incredible flexibility.
        no           | CHANGE MASTER TO ...;<br>STOP SLAVE;
        mysql        | CHANGE MASTER FOR CHANNEL 'foo' TO ...;<br>STOP SLAVE FOR CHANNEL 'foo';
        mariadb      | CHANGE MASTER 'foo' TO ...;<br>STOP SLAVE 'foo';
+
+Commands `cmd-mysqldump` and `cmd-mysql` are wrappers around `mysqldump` and `mysql` respectively.
+By default both are equal to the namesakes.
+You should not specify `mysqldump` and `mysql`. These options are built out of
+[mysqldump options](#mysqldump-options) and [mysql options](#mysql-options).
+But you may want to define`cmd-mysqldump` or `cmd-mysql` to wrap them into, for example, SSH command:
+
+    [foo]
+    ...
+    cmd-mysqldump = ssh example.com %(mysqldump)s`
+    ...
+
+Option `sql-change-master` is composed of [master options](#master-options) unless defined explicitly.
+
+The values of `sql-stop-slave`, `sql-start-slave`, `sql-change-master` and `sql-set-slave-skip-counter`
+depend on the value of `multi-source`. Of course you *can* specify these options explicitly for incredible flexibility.
 
 
 master options
@@ -116,7 +124,7 @@ option.
 mysqldump options
 -----------------
 
-These options are used to construct an command line for creating a dump (`cmd-mysqldump`) iff it is not defined explicitly. `mysqldump-*` options are directly mapped to the
+These options are used to construct an command for creating a dump (`mysqldump`) iff it is not defined explicitly. `mysqldump-*` options are directly mapped to the
 [mysqldump](http://dev.mysql.com/doc/refman/5.7/en/mysqldump.html) options with a few exceptions. Note that MySQL supports a few variants of options, e. g.:
  * `--comments`
  * `--skip-comments`
@@ -125,7 +133,6 @@ These options are used to construct an command line for creating a dump (`cmd-my
 The latter is prefered for readability.
 These are built-in default options for `mysqldump`:
 
-    mysqldump = mysqldump
     mysqldump-add-drop-database = 1
     mysqldump-comments = 0
     mysqldump-compress = 1
@@ -134,23 +141,24 @@ These are built-in default options for `mysqldump`:
     mysqldump-host = %(master-host)s
     mysqldump-master-data = 2
     mysqldump-single-transaction = 1
+    path-mysqldump = mysqldump
 
-Thus `cmd-mysqldump` will look like `mysqldump --compress=1 --comments=0 --master-data=2 ...`
+Thus `mysqldump` will look like `mysqldump --compress=1 --comments=0 --master-data=2 ...`
 
 Replicator will make sure that `--defaults-file` and `defaults-extra-file` options
 are put *before all other* options.
 
-Option `mysqldump` holds the path to the *mysqldump* executable.
+Option `path-mysqldump` holds the path to the *mysqldump* executable.
 
 Option `databases = foo bar` will result in `--databases foo bar` *at the end* of `cmd-mysqldump`.
 
 Option `database = foo` will result in `foo` *at the end* of `cmd-mysqldump`.
 
 Note that `mysqldump-master-data = 1` is not recommented, but should be safe.
-While `mysqldump-master-data = 0` will make impossible automatic [channel configuration](#master-options),
-you will need to figure out and specify `master-log-file` and `master-log-pos`.
+While `mysqldump-master-data = 0` makes impossible automatic [channel configuration](#master-options),
+you will need to figure out and specify `master-log-file` and `master-log-pos` explicitly.
 
 mysql options
 -------------
 
-These options are used to construct an command line for executing SQL statements on the slave (`cmd-mysql`) iff it is not defined explicitly. This is done in a way similar to the one described above for [mysqldump options](#mysqldump-options).
+These options are used to construct an command line for executing SQL statements on the slave (`mysql`) iff it is not defined explicitly. This is done in a way similar to the one described above for [mysqldump options](#mysqldump-options).

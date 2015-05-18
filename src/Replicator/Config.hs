@@ -74,8 +74,8 @@ buildOption conf (opt, builder) = foldl go conf (Cf.sections conf) where
 addOptions :: Cf.ConfigParser -> Cf.ConfigParser
 addOptions conf = foldl buildOption conf opts where
     opts = [ ("channel", \_ s -> s)
-           , ("cmd-mysql", makeCommand "mysql")
-           , ("cmd-mysqldump", makeCommand "mysqldump")
+           , ("mysql", makeCommand "mysql")
+           , ("mysqldump", makeCommand "mysqldump")
            , ("sql-change-master", makeSqlChangeMaster)
            , ("sql-reset-slave", makeSqlResetSlave)
            , ("sql-set-slave-skip-counter", makeSetSlaveSkipCounter)
@@ -126,8 +126,8 @@ makeSetSlaveSkipCounter conf sec = case multiSource conf sec of
     _       -> "SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1;" -- FIXME: MySQL?
 
 makeCommand :: String -> Cf.ConfigParser -> Cf.SectionSpec -> String
-makeCommand cmd conf sec = unwords $ cmd':args where
-    cmd' = get conf sec cmd
+makeCommand cmd conf sec = unwords $ binary:args where
+    binary = get conf sec $ "path-" ++ cmd
     args = map mkArgument opts
     opts = reorderMySQLOptions $ getOptions cmd conf sec
     mkArgument name = case name of
@@ -150,16 +150,16 @@ reorderMySQLOptions a = b ++ m ++ e
 
 defaults :: String
 defaults = [r|[DEFAULT]
+cmd-mysql = %(mysql)s
+cmd-mysqldump = %(mysqldump)s
 dump = %(dump-dir)s/replicator-%(channel)s.mysql.gz
 dump-dir = .
 master-log-file = auto
 master-log-pos  = auto
 multi-source = no
-mysql = mysql
 mysql-default-character-set = utf8
 mysql-host = localhost
 mysql-user = root
-mysqldump = mysqldump
 mysqldump-add-drop-database = 1
 mysqldump-comments = 0
 mysqldump-compress = 1
@@ -168,6 +168,8 @@ mysqldump-extended-insert = 1
 mysqldump-host = %(master-host)s
 mysqldump-master-data = 2
 mysqldump-single-transaction = 1
+path-mysql = mysql
+path-mysqldump = mysqldump
 sql-begin-import = SET AUTOCOMMIT=0;
 sql-end-import = COMMIT;
 |]
