@@ -21,12 +21,13 @@ Usage: replicator [options] {command} [channel ...]
 
 Primitive commands:
 
-  clean    - remove dumps and temporary files for the given channels
-  defaults - print built-in default options
-  dump     - create dumps for the given channels
-  list     - list all channels defined in the config file
-  start    - continue replication for the given channels
-  stop     - pause replication for the given channels
+  clean     - remove dumps and temporary files for the given channels
+  defaults  - print builtin default options
+  dump      - create dumps for the given channels
+  list      - list all channels defined in the config file
+  mysqldump - print the mysqldump command used for dumping
+  start     - continue replication for the given channels
+  stop      - pause replication for the given channels
 
 Complex commands:
 
@@ -51,17 +52,18 @@ main = $initHFlags usage >> do
     when (null arguments) $ error "No command specified"
     when (not $ null missing) $ error $ "No such channels: " ++ unwords missing
     case cmd of
-        "defaults" -> putStr defaults
-        "default"  -> putStr defaults
-        "list"     -> putStrLn $ unwords all_channels
-        "repl"     -> Cmd.replicate conf secs
-        "pipe"     -> Cmd.pipe conf secs
-        "dump"     -> Cmd.createDump conf secs
-        "clean"    -> Cmd.clean conf secs
-        "stop"     -> Cmd.stopSlave conf secs
-        "start"    -> Cmd.startSlave conf secs
-        "kick"     -> Cmd.kickSlave conf secs
-        "restart"  -> Cmd.restartSlave conf secs
-        "reset"    -> Cmd.resetSlave conf secs
-        _          -> error $ "Unknown command: " ++ cmd
+      "defaults"  -> putStr defaults
+      "default"   -> putStr defaults
+      "list"      -> putStrLn $ unwords all_channels
+      "mysqldump" -> Cmd.mysqldump conf secs
+      "repl"      -> Cmd.replicate conf secs
+      "pipe"      -> Cmd.pipe conf secs
+      "dump"      -> Cmd.createDump conf secs
+      "clean"     -> Cmd.clean conf secs
+      "stop"      -> Cmd.stopSlave conf secs
+      "start"     -> Cmd.startSlave conf secs
+      "kick"      -> Cmd.kickSlave conf secs
+      "restart"   -> Cmd.restartSlave conf secs
+      "reset"     -> Cmd.resetSlave conf secs
+      _           -> error $ "Unknown command: " ++ cmd
 

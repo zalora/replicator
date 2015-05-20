@@ -35,12 +35,13 @@ Usage
 
 Primitive commands:
 
-  * `clean`    - remove dumps and temporary files for the given channels
-  * `defaults` - print built-in default options
-  * `dump`     - create dumps for the given channels
-  * `list`     - list all channels defined in the config file
-  * `start`    - continue replication for the given channels
-  * `stop`     - pause replication for the given channels
+  * `clean`     - remove dumps and temporary files for the given channels
+  * `defaults`  - print builtin default options
+  * `dump`      - create dumps for the given channels
+  * `list`      - list all channels defined in the config file
+  * `mysqldump` - print the mysqldump command used for dumping
+  * `start`     - continue replication for the given channels
+  * `stop`      - pause replication for the given channels
 
 Complex commands:
 
