@@ -55,7 +55,7 @@ main = $initHFlags usage >> do
       "defaults"  -> putStr defaults
       "default"   -> putStr defaults
       "list"      -> putStrLn $ unwords all_channels
-      "mysqldump" -> Cmd.mysqldump conf secs
+      "mysqldump" -> Cmd.printMysqldump conf secs
       "repl"      -> Cmd.replicate conf secs
       "pipe"      -> Cmd.pipe conf secs
       "dump"      -> Cmd.createDump conf secs

@@ -5,8 +5,8 @@ module Replicator.Command (
     clean,
     createDump,
     kickSlave,
-    mysqldump,
     pipe,
+    printMysqldump,
     replicate,
     resetSlave,
     restartSlave,
@@ -337,8 +337,8 @@ kickSlave = run [ taskStopSlave
                 , taskStartSlave
                 ]
 
-mysqldump :: Command
-mysqldump conf = mapM_ info 
+printMysqldump :: Command
+printMysqldump conf = mapM_ info
   where
     info s = putStrLn $ get conf s "mysqldump"
 
