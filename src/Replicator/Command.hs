@@ -111,10 +111,8 @@ sizeReport msg Context{..} st s' = do
     t' <- seconds
     let progress = case st of
             Nothing -> if s' > 0 then Just (s', t') else Nothing
-            Just (s, t) -> if (s' > s) && (t' - t > 30) && (
-                        (t' - t > 300) ||
-                        10 * (s' - s) > s
-                      ) then Just (s', t')
+            Just (s, t) -> if ((t' - t > 30) && ((t' - t > 600) || 10 * (s' - s) > s))
+                        then Just (s', t')
                         else Nothing
     case progress of
         Nothing -> return st
