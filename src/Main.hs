@@ -25,6 +25,7 @@ Primitive commands:
   defaults  - print builtin default options
   dump      - create dumps for the given channels
   list      - list all channels defined in the config file
+  mysql     - print the mysql command used on slave
   mysqldump - print the mysqldump command used for dumping
   start     - continue replication for the given channels
   stop      - pause replication for the given channels
@@ -55,6 +56,7 @@ main = $initHFlags usage >> do
       "defaults"  -> putStr defaults
       "default"   -> putStr defaults
       "list"      -> putStrLn $ unwords all_channels
+      "mysql"     -> Cmd.printMysql conf secs
       "mysqldump" -> Cmd.printMysqldump conf secs
       "repl"      -> Cmd.replicate conf secs
       "pipe"      -> Cmd.pipe conf secs

@@ -6,6 +6,7 @@ module Replicator.Command (
     createDump,
     kickSlave,
     pipe,
+    printMysql,
     printMysqldump,
     replicate,
     resetSlave,
@@ -339,4 +340,9 @@ printMysqldump :: Command
 printMysqldump conf = mapM_ info
   where
     info s = putStrLn $ get conf s "mysqldump"
+
+printMysql:: Command
+printMysql conf = mapM_ info
+  where
+    info s = putStrLn $ get conf s "mysql"
 
