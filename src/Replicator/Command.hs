@@ -134,8 +134,8 @@ taskResetSlave = runSql "sql-reset-slave"
 taskChangeMaster :: Task
 taskChangeMaster = runSql "sql-change-master"
 
-taskSetSlaveSkipCounter :: Task
-taskSetSlaveSkipCounter = runSql "sql-set-slave-skip-counter"
+taskSkipReplError :: Task
+taskSkipReplError = runSql "sql-skip-repl-error"
 
 
 -- TODO: get rid of IORef
@@ -331,10 +331,7 @@ createDump :: Command
 createDump = run [ taskCreateDump ]
 
 kickSlave :: Command
-kickSlave = run [ taskStopSlave
-                , taskSetSlaveSkipCounter
-                , taskStartSlave
-                ]
+kickSlave = run [ taskSkipReplError ]
 
 printMysqldump :: Command
 printMysqldump conf = mapM_ info

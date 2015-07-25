@@ -78,7 +78,7 @@ addOptions conf = foldl buildOption conf opts where
            , ("mysqldump", makeCommand "mysqldump")
            , ("sql-change-master", makeSqlChangeMaster)
            , ("sql-reset-slave", makeSqlResetSlave)
-           , ("sql-set-slave-skip-counter", makeSetSlaveSkipCounter)
+           , ("sql-skip-repl-error", makeSkipReplError)
            , ("sql-start-slave", makeSqlSlave "START SLAVE")
            , ("sql-stop-slave", makeSqlSlave "STOP SLAVE")
            ]
@@ -120,10 +120,12 @@ makeSqlResetSlave conf sec = case multiSource conf sec of
     _       -> "RESET SLAVE ALL;"
     where channel = get conf sec "channel"
 
-makeSetSlaveSkipCounter :: Cf.ConfigParser -> Cf.SectionSpec -> String
-makeSetSlaveSkipCounter conf sec = case multiSource conf sec of
-    "maria" -> "SET @@default_master_connection='%(channel)s'; SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1;"
-    _       -> "SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1;" -- FIXME: MySQL?
+
+makeSkipReplError :: Cf.ConfigParser -> Cf.SectionSpec -> String
+makeSkipReplError conf sec = case multiSource conf sec of
+    "maria" -> "SET @@default_master_connection='%(channel)s'; " ++ kick
+    _       -> kick -- FIXME: MySQL?
+    where kick = "STOP SLAVE; SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1; START SLAVE;"
 
 makeCommand :: String -> Cf.ConfigParser -> Cf.SectionSpec -> String
 makeCommand cmd conf sec = unwords $ binary:args where
