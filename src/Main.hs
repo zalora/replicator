@@ -24,9 +24,11 @@ Primitive commands:
   clean     - remove dumps and temporary files for the given channels
   defaults  - print builtin default options
   dump      - create dumps for the given channels
+  kick      - skip one statement (use on replication errors)
   list      - list all channels defined in the config file
   mysql     - print the mysql command used on slave
   mysqldump - print the mysqldump command used for dumping
+  reset     - remove master info (use to make slave a master)
   start     - continue replication for the given channels
   stop      - pause replication for the given channels
 
@@ -34,8 +36,6 @@ Complex commands:
 
   repl    - replicate the given channels from scratch
   pipe    - same as repl but without intermediate dump file
-  kick    - stop, skip one statement, then start
-  reset   - stop, then reset slave
   restart - stop, then start
 
 Options:|]

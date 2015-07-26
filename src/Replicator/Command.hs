@@ -325,7 +325,7 @@ restartSlave :: Command
 restartSlave = run [ taskStopSlave, taskStartSlave ]
 
 resetSlave :: Command
-resetSlave = run [ taskStopSlave, taskResetSlave ]
+resetSlave = run [ taskResetSlave ]
 
 createDump :: Command
 createDump = run [ taskCreateDump ]

@@ -115,10 +115,10 @@ channelSQL conf sec = case multiSource conf sec of
 -- XXX: MySQL >= 5.5
 makeSqlResetSlave :: Cf.ConfigParser -> Cf.SectionSpec -> String
 makeSqlResetSlave conf sec = case multiSource conf sec of
-    "maria" -> "RESET SLAVE '" ++ channel ++ "' ALL;"
-    "mysql" -> "RESET SLAVE ALL FOR CHANNEL '" ++ channel ++ "';"
-    _       -> "RESET SLAVE ALL;"
-    where channel = get conf sec "channel"
+    "maria" -> "SET @@default_master_connection='%(channel)s'; " ++ reset
+    "mysql" -> "STOP SLAVE FOR CHANNEL '%(channel)s'; RESET SLAVE ALL FOR CHANNEL '%(channel)s';"
+    _       -> reset
+    where reset = "STOP SLAVE; RESET SLAVE ALL;"
 
 
 makeSkipReplError :: Cf.ConfigParser -> Cf.SectionSpec -> String
