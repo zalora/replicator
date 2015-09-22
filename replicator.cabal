@@ -10,7 +10,7 @@ license: MIT
 license-file: LICENSE
 author: Igor Pashev
 maintainer: Igor Pashev <pashev.igor@gmail.com>
-copyright: 2014, Zalora South East Asia Pte. Ltd
+copyright: 2014-2015, Zalora South East Asia Pte. Ltd
 category: Database
 build-type: Simple
 extra-source-files:
