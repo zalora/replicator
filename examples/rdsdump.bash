@@ -4,17 +4,18 @@ set -euo pipefail
 mysql_args=
 while [ $# -gt 0 ]; do
   case $1 in
-    --host=*|--password=*|--user=*|--*defaults-file=*|\
-      --ssl-ca=*|--ssl-key=*|--ssl-cert=*)
+    --host=*|--password=*|--user=*|\
+    --defaults-file=*|--defaults-extra-file=*|\
+    --ssl=*|--ssl-ca=*|--ssl-key=*|--ssl-cert=*|\
+    -h?*|-u?*|-p?*)
       mysql_args="$mysql_args $1"
       shift 1;;
-    --host|-h|--user|-u|--*defaults-file|\
-      --ssl-ca|--ssl-key|--ssl-cert)
+    --host|--user|\
+    --defaults-file|--defaults-extra-file|\
+    --ssl-ca|--ssl-key|--ssl-cert|\
+    -h|-u)
       mysql_args="$mysql_args $1 $2"
       shift 2;;
-    -h*|-u*|-p?*)
-      mysql_args="$mysql_args $1"
-      shift 1;;
     *) shift;;
   esac
 done
