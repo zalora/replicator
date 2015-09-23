@@ -1,23 +1,21 @@
-{ cabal, ConfigFile, filepath, Glob, hflags, lensFamilyCore, MissingH
-, monadParallel, mtl, pipes, pipesBytestring, pipesGroup, pipesSafe
-, pipesShell, pipesZlib, rawStringsQq, regexApplicative, time
-, transformers
+{ mkDerivation, base, bytestring, ConfigFile, containers, directory
+, filepath, Glob, hflags, lens-family-core, MissingH
+, monad-parallel, mtl, pipes, pipes-bytestring, pipes-group
+, pipes-safe, pipes-shell, pipes-zlib, raw-strings-qq
+, regex-applicative, stdenv, time, transformers, unix
 }:
-
-cabal.mkDerivation (self: {
+mkDerivation {
   pname = "replicator";
-  version = "git";
+  version = "0.5.0";
   src = ./.;
   isLibrary = false;
   isExecutable = true;
   buildDepends = [
-    ConfigFile filepath Glob hflags lensFamilyCore MissingH monadParallel
-    mtl pipes pipesBytestring pipesGroup pipesSafe pipesShell pipesZlib
-    rawStringsQq regexApplicative time transformers
+    base bytestring ConfigFile containers directory filepath Glob
+    hflags lens-family-core MissingH monad-parallel mtl pipes
+    pipes-bytestring pipes-group pipes-safe pipes-shell pipes-zlib
+    raw-strings-qq regex-applicative time transformers unix
   ];
-  meta = {
-    description = "Automate creating MySQL multi-source slaves";
-    license = self.stdenv.lib.licenses.mit;
-    platforms = self.ghc.meta.platforms;
-  };
-})
+  description = "Automate creating MySQL multi-source slaves";
+  license = stdenv.lib.licenses.mit;
+}
