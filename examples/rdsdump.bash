@@ -36,8 +36,8 @@ trap 'start_replication' EXIT
 stop_replication
 
 replica -e 'SHOW SLAVE STATUS\G' | awk -f <(cat - <<- 'AWK'
-  /\<Exec_Master_Log_Pos\>/ { log_pos = $2 };
-  /\<Master_Log_File\>/     { log_file = $2 };
+  /\<Exec_Master_Log_Pos\>/    { log_pos = $2 };
+  /\<Relay_Master_Log_File\>/  { log_file = $2 };
   END {
     printf "-- CHANGE MASTER TO MASTER_LOG_FILE='%s', MASTER_LOG_POS=%d\n", log_file, log_pos
   }
