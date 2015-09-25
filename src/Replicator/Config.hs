@@ -64,13 +64,6 @@ options conf sec = section_options `union` default_options
           default_options = forceEither (Cf.options conf' "DEFAULT")
           conf' = removeDefaults conf sec
 
-buildOption :: Cf.ConfigParser
-            -> (Cf.OptionSpec,  Cf.ConfigParser -> Cf.SectionSpec -> String)
-            -> Cf.ConfigParser
-buildOption conf (opt, builder) = foldl go conf (Cf.sections conf) where
-    go cf s = if Cf.has_option cf s opt && ("auto" /= get cf s opt) then cf
-              else set cf s opt (builder cf s)
-
 addOptions :: Cf.ConfigParser -> Cf.ConfigParser
 addOptions conf = foldl buildOption conf opts where
     opts = [ ("channel", \_ s -> s)
@@ -82,6 +75,12 @@ addOptions conf = foldl buildOption conf opts where
            , ("sql-start-slave", makeSqlSlave "START SLAVE")
            , ("sql-stop-slave", makeSqlSlave "STOP SLAVE")
            ]
+    buildOption :: Cf.ConfigParser
+                -> (Cf.OptionSpec,  Cf.ConfigParser -> Cf.SectionSpec -> String)
+                -> Cf.ConfigParser
+    buildOption conf (opt, builder) = foldl go conf (Cf.sections conf) where
+        go cf s = if Cf.has_option cf s opt && ("auto" /= get cf s opt) then cf
+                  else set cf s opt (builder cf s)
 
 makeSqlChangeMaster :: Cf.ConfigParser -> Cf.SectionSpec -> String
 makeSqlChangeMaster conf sec = "CHANGE MASTER" ++ channelSQL conf sec ++
