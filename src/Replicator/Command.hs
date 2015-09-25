@@ -102,7 +102,7 @@ pipeProgress report producer = if not flags_progress
     progress state c = await >>= \case
                     Nothing -> return ()
                     Just b  -> do
-                        let c' = c + (toInteger $ BSC.length b)
+                        let c' = c + toInteger (BSC.length b)
                         state' <- liftIO $ report state c'
                         yield b
                         progress state' c'
@@ -112,7 +112,7 @@ sizeReport msg Context{..} st s' = do
     t' <- seconds
     let progress = case st of
             Nothing -> if s' > 0 then Just (s', t') else Nothing
-            Just (s, t) -> if ((t' - t > 30) && ((t' - t > 600) || 10 * (s' - s) > s))
+            Just (s, t) -> if (t' - t > 30) && ((t' - t > 600) || 10 * (s' - s) > s)
                         then Just (s', t')
                         else Nothing
     case progress of
@@ -171,7 +171,7 @@ taskGetMasterLog Context{..} = if log_file /= "auto" && log_pos /= "auto"
 taskCreateDump :: Task
 taskCreateDump Context{..} = do
     exists <- doesFileExist dump
-    if (complex && exists && not flags_force)
+    if complex && exists && not flags_force
     then do
         size <- getFileSize dump
         quack zero $ "Using existing " ++ show dump ++ " " ++ humanSize size
@@ -210,9 +210,8 @@ taskImportDump Context{..} = do
                     Nothing -> if p' > 0 then Just (p', t') else Nothing
                     Just (p, t) -> if (p' > p) && (t' - t > 30 || p' == 100) && (
                                 (t' - t > 300) ||
-                                ((p' `mod` 10 == 0)) ||
-                                (p' - 0) < 5 ||
-                                (100 - p') < 5
+                                (p' `mod` 10 == 0) ||
+                                p' < 5 || 100 - p' < 5
                               ) then Just (p', t')
                                 else Nothing
             case progress of
@@ -287,7 +286,7 @@ run :: [Task] -> Command
 run tasks conf sections = do
     zero <- if flags_timeline then seconds else return 0
     _ <- map' (\s -> run' Context{sec = s, ..} tasks) sections
-    when (flags_timeline) $ quack zero "Done."
+    when flags_timeline $ quack zero "Done."
     where
         complex = length tasks > 1
         map' = if flags_parallel then Parallel.mapM else mapM

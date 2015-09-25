@@ -3,7 +3,7 @@
 
 module Main where
 
-import Control.Monad (when)
+import Control.Monad (when, unless)
 import Data.List (sort)
 import Data.Version (showVersion)
 import HFlags (initHFlags, arguments)
@@ -51,7 +51,7 @@ main = $initHFlags usage >> do
                                all_sections
         missing = filter (`notElem` all_channels) channels
     when (null arguments) $ error "No command specified"
-    when (not $ null missing) $ error $ "No such channels: " ++ unwords missing
+    unless (null missing) $ error $ "No such channels: " ++ unwords missing
     case cmd of
       "defaults"  -> putStr defaults
       "default"   -> putStr defaults
