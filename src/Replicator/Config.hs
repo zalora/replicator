@@ -65,7 +65,7 @@ options conf sec = section_options `union` default_options
           conf' = removeDefaults conf sec
 
 addOptions :: Cf.ConfigParser -> Cf.ConfigParser
-addOptions conf = foldl buildOption conf opts where
+addOptions config = foldl buildOption config opts where
     opts = [ ("channel", \_ s -> s)
            , ("mysql", makeCommand "mysql")
            , ("mysqldump", makeCommand "mysqldump")
