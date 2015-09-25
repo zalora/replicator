@@ -10,7 +10,7 @@ module Replicator.Config (
 import Control.Applicative ((<$>))
 import Data.Char (toUpper, toLower, isAlpha)
 import Data.Either.Utils (forceEither)
-import Data.List ((\\), union, isPrefixOf, stripPrefix, partition, intercalate)
+import Data.List ((\\), union, isPrefixOf, stripPrefix, partition, intercalate, intersect)
 import Data.Maybe (fromJust)
 import Data.String.Utils (startswith)
 import System.FilePath.Glob (compile, match)
@@ -127,10 +127,13 @@ makeSkipReplError conf sec = case multiSource conf sec of
     where kick = "STOP SLAVE; SET GLOBAL SQL_SLAVE_SKIP_COUNTER=1; START SLAVE;"
 
 makeCommand :: String -> Cf.ConfigParser -> Cf.SectionSpec -> String
-makeCommand cmd conf sec = unwords $ binary:args where
+makeCommand cmd conf sec = unwords $ binary:args' where
     binary = get conf sec $ "path-" ++ cmd
-    args = map mkArgument opts
     opts = reorderMySQLOptions $ getOptions cmd conf sec
+    args = map mkArgument opts
+    args' = if null $ opts `intersect` [ "defaults-file", "defaults-extra-file" ]
+            then "--no-defaults" : args
+            else args
     mkArgument name = case name of
         "database"  -> value
         "databases" -> o ++ " " ++ value
