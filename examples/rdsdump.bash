@@ -2,6 +2,7 @@
 set -euo pipefail
 
 mysql_args=
+mysqldump_args=
 while [ $# -gt 0 ]; do
   case $1 in
     --host=*|--password=*|--user=*|\
@@ -9,14 +10,22 @@ while [ $# -gt 0 ]; do
     --ssl=*|--ssl-ca=*|--ssl-key=*|--ssl-cert=*|\
     -h?*|-u?*|-p?*)
       mysql_args="$mysql_args $1"
+      mysqldump_args="$mysqldump_args $1"
       shift 1;;
     --host|--user|\
     --defaults-file|--defaults-extra-file|\
     --ssl-ca|--ssl-key|--ssl-cert|\
     -h|-u)
       mysql_args="$mysql_args $1 $2"
+      mysqldump_args="$mysqldump_args $1 $2"
       shift 2;;
-    *) shift;;
+    --master-data=*)
+      shift;;
+    --master-data)
+      shift 2;;
+    *)
+      mysqldump_args="$mysqldump_args $1"
+      shift;;
   esac
 done
 
@@ -44,7 +53,7 @@ replica -e 'SHOW SLAVE STATUS\G' | awk -f <(cat - <<- 'AWK'
 AWK
 )
 
-mysqldump "$@" &
+mysqldump $mysql_args &
 sleep 10
 
 start_replication
