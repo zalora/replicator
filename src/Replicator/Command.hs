@@ -19,7 +19,7 @@ import Prelude hiding (replicate)
 
 import Control.Applicative ((<$>))
 import Control.Monad (when, forever)
-import Control.Monad.Error (runErrorT)
+import Control.Monad.Except (runExceptT)
 import Control.Monad.IO.Class (liftIO, MonadIO)
 import Data.IORef (newIORef, writeIORef, readIORef)
 import Pipes ((>->), await, yield, Pipe, Producer, for)
@@ -147,7 +147,7 @@ taskGetMasterLog Context{..} = if log_file /= "auto" && log_pos /= "auto"
     readIORef master_log >>= \case
         Nothing -> error "Could not get master log position"
         Just (MasterLog file pos) -> do
-            rv <- runErrorT $ do
+            rv <- runExceptT $ do
                 conf' <- Cf.set conf sec "master-log-file" file
                 Cf.set conf' sec "master-log-pos" (show pos)
             case rv of
@@ -236,7 +236,7 @@ taskPipe Context{..} = do
     readIORef master_log >>= \case
         Nothing -> error "Could not get master log position"
         Just (MasterLog file pos) -> do
-            rv <- runErrorT $ do
+            rv <- runExceptT $ do
                 conf' <- Cf.set conf sec "master-log-file" file
                 Cf.set conf' sec "master-log-pos" (show pos)
             case rv of
