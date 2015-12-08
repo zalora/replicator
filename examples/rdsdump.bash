@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -exuo pipefail
 
 mysql_args=
 mysqldump_args=
+master_data=0
 while [ $# -gt 0 ]; do
   case $1 in
     --host=*|--password=*|--user=*|\
@@ -20,8 +21,10 @@ while [ $# -gt 0 ]; do
       mysqldump_args="$mysqldump_args $1 $2"
       shift 2;;
     --master-data=*)
+      master_data=$(echo "$1" | cut -d= -f2)
       shift;;
     --master-data)
+      master_data=$2
       shift 2;;
     *)
       mysqldump_args="$mysqldump_args $1"
@@ -44,17 +47,22 @@ stop_replication () {
 trap 'start_replication' EXIT
 stop_replication
 
+if [ "$master_data" -gt 0 ]; then
+if [ "$master_data" -eq 2 ]; then
+  printf '-- '
+fi
 replica -e 'SHOW SLAVE STATUS\G' | awk -f <(cat - <<- 'AWK'
   /\<Exec_Master_Log_Pos\>/    { log_pos = $2 };
   /\<Relay_Master_Log_File\>/  { log_file = $2 };
   END {
-    printf "-- CHANGE MASTER TO MASTER_LOG_FILE='%s', MASTER_LOG_POS=%d\n", log_file, log_pos
+    printf "CHANGE MASTER TO MASTER_LOG_FILE='%s', MASTER_LOG_POS=%d;\n", log_file, log_pos
   }
 AWK
 )
+fi
 
-mysqldump $mysql_args &
-sleep 10
+mysqldump $mysqldump_args &
+sleep 30
 
 start_replication
 trap - EXIT
