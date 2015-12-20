@@ -49,7 +49,6 @@ Primitive commands:
 Complex commands:
 
   * `repl`    - replicate the given channels from scratch
-  * `pipe`    - same as `repl` but without intermediate dump file
   * `restart` - stop, then start
 
 The following command will create an SQL dump for channel `foo` defined in

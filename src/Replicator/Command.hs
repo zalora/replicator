@@ -5,7 +5,6 @@ module Replicator.Command (
     clean,
     createDump,
     kickSlave,
-    pipe,
     printMysql,
     printMysqldump,
     replicate,
@@ -225,52 +224,6 @@ taskImportDump Context{..} = do
             decompress dump $ pipeProgress (report amount) (PBS.fromHandle h)
             yield (BSC.pack $ end ++ "\n")
 
-taskPipe :: Task
-taskPipe Context{..} = do
-    quack zero msg
-    master_log <- newIORef Nothing
-    runShell $
-        producer master_log >?> pipeCmd mysql
-        >-> ignoreOut >-> PBS.toHandle stderr
-    -- XXX: copy-n-paste from taskGetMasterLog
-    readIORef master_log >>= \case
-        Nothing -> error "Could not get master log position"
-        Just (MasterLog file pos) -> do
-            rv <- runExceptT $ do
-                conf' <- Cf.set conf sec "master-log-file" file
-                Cf.set conf' sec "master-log-pos" (show pos)
-            case rv of
-                Left _ -> error "Failed to set master log position"
-                Right cf -> return Context {conf = cf, ..}
-    where
-        begin     = get conf sec "sql-begin-import"
-        channel   = get conf sec "channel"
-        end       = get conf sec "sql-end-import"
-        log_file  = get conf sec "master-log-file"
-        log_pos   = get conf sec "master-log-pos"
-        msg       = "Reslaving " ++ show channel
-        mysql     = get conf sec "cmd-mysql"
-        mysqldump = get conf sec "cmd-mysqldump"
-        report    = sizeReport msg Context{..}
-        producer ml = do
-            yield (BSC.pack $ begin ++ "\n")
-            pipeProgress report (producerCmd'' mysqldump) >-> watchMasterLog ml
-            yield (BSC.pack $ end ++ "\n")
-        noMasterLog = forever $ await >>= yield
-        -- XXX: split into lines?
-        -- The first chunk should be large enough to include master log comment
-        watchMasterLog ml = if log_file /= "auto" && log_pos /= "auto"
-              then noMasterLog
-              else do
-                bs <- await
-                yield bs
-                case BSC.unpack bs =~ masterLog of
-                  Nothing -> error "Could not get master log position"
-                  Just m -> do
-                      liftIO $ writeIORef ml (Just m)
-                      noMasterLog
-
-
 taskClean :: Task
 taskClean Context{..} = mapM_ rm files >> return Context{..} where
     rm f = do
@@ -294,13 +247,6 @@ run tasks conf sections = do
         run' ctx (t:tt) = do
             ctx' <- t ctx;
             run' ctx' tt
-
-pipe :: Command
-pipe = run [ taskStopSlave
-           , taskPipe
-           , taskChangeMaster
-           , taskStartSlave
-           ]
 
 replicate :: Command
 replicate = run [ taskCreateDump

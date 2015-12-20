@@ -35,7 +35,6 @@ Primitive commands:
 Complex commands:
 
   repl    - replicate the given channels from scratch
-  pipe    - same as repl but without intermediate dump file
   restart - stop, then start
 
 Options:|]
@@ -59,7 +58,6 @@ main = $initHFlags usage >> do
       "mysql"     -> Cmd.printMysql conf secs
       "mysqldump" -> Cmd.printMysqldump conf secs
       "repl"      -> Cmd.replicate conf secs
-      "pipe"      -> Cmd.pipe conf secs
       "dump"      -> Cmd.createDump conf secs
       "clean"     -> Cmd.clean conf secs
       "stop"      -> Cmd.stopSlave conf secs
